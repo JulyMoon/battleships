@@ -18,18 +18,19 @@ namespace BattleshipsClient
         private const int boardHeight = boardWidth;
         private const int boardX = 40;
         private const int boardY = 40;
-        private const int cellSize = 20;
+        private const int cellSize = 25;
         private const int shipWindowSize = cellSize * 5;
         private const int shipWindowX = boardX + (boardWidth + 1) * cellSize;
         private const int shipWindowY = boardY;
 
         //private static readonly Color backgroundColor = Color.White;
-        private static readonly Pen boardLinePen = Pens.LightSkyBlue;
-        private static readonly Brush boardTextBrush = Brushes.DodgerBlue;
-        private static readonly Brush shipFillBrush = Brushes.SpringGreen;
-        private static readonly Pen shipOutlinePen = Pens.Black;
+        private static readonly Pen boardLinePen = new Pen(Color.FromArgb(180, 180, 255));
+        private static readonly Brush boardTextBrush = Brushes.Black;
+        private static readonly Brush shipFillBrush = new SolidBrush(Color.FromArgb(20, Color.Black));
+        private static readonly Pen shipOutlinePen = new Pen(Color.Blue, 2);
+        private static readonly Pen shipHighlightPen = new Pen(Color.Green, shipOutlinePen.Width);
         private static readonly Pen shipWindowPen = Pens.Navy;
-        private static readonly Font boardFont = new Font(FontFamily.GenericMonospace, 13);
+        private static readonly Font boardFont = new Font("Consolas", 10);
 
         private Graphics gfx;
         private bool dragging = false;
@@ -39,6 +40,9 @@ namespace BattleshipsClient
         private int shipX;
         private int shipY;
         private bool shipVertical = true;
+        private bool snapping = false;
+        private int snapX;
+        private int snapY;
 
         public MainWindow()
         {
@@ -47,27 +51,30 @@ namespace BattleshipsClient
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            int shipWidth;
-            int shipHeight;
-            GetShipDimensions(out shipWidth, out shipHeight);
+            int shipWidth, shipHeight;
+            GetShipDimensions(shipVertical, shipLength, false, out shipWidth, out shipHeight);
 
             shipX = shipWindowX + (shipWindowSize - shipWidth) / 2;
             shipY = shipWindowY + (shipWindowSize - shipHeight) / 2;
-
-            //SetDoubleBuffered(this);
         }
 
-        private void GetShipDimensions(out int shipW, out int shipH)
+        private static void GetShipDimensions(bool vertical, int length, bool board, out int shipW, out int shipH)
         {
-            if (shipVertical)
+            if (vertical)
             {
-                shipW = cellSize;
-                shipH = shipLength * cellSize;
+                shipW = 1;
+                shipH = length;
             }
             else
             {
-                shipW = shipLength * cellSize;
-                shipH = cellSize;
+                shipW = length;
+                shipH = 1;
+            }
+
+            if (!board)
+            {
+                shipW *= cellSize;
+                shipH *= cellSize;
             }
         }
 
@@ -76,58 +83,45 @@ namespace BattleshipsClient
 
         }
 
-        private static void FreeDrawShipCell(Graphics g, Brush fillBrush, Pen outlinePen, int x, int y, int cellsize)
+        /*private static void DrawShipCell(Graphics g, Brush fillBrush, Pen outlinePen, int x, int y)
         {
-            /*gfx.DrawRectangle(pen, x, y, cellSize, cellSize);
+            var ship = new Rectangle(x, y, cellSize, cellSize);
+            g.FillRectangle(fillBrush, ship);
+            g.DrawRectangle(outlinePen, ship);
+        }*/
 
-            const int k = 2; // assert: cellSize % k == 0
+        private static void DrawShip(Graphics g, Brush fillBrush, Pen outlinePen, bool vertical, int length, int x, int y)
+        {
+            int shipWidth, shipHeight;
+            GetShipDimensions(vertical, length, false, out shipWidth, out shipHeight);
 
-            for (int i = 0; i < cellSize / k; i++)
-            {
-                int ax = x + i * k;
-                int ay = y + i * k;
-                gfx.DrawLine(pen, ax, y, x, ay);
-                gfx.DrawLine(pen, ax, y + cellSize, x + cellSize, ay);
-            }*/
-
-            var ship = new Rectangle(x, y, cellsize, cellsize);
+            var ship = new Rectangle(x, y, shipWidth, shipHeight);
             g.FillRectangle(fillBrush, ship);
             g.DrawRectangle(outlinePen, ship);
         }
 
-        private static void FreeDrawShip(Graphics g, Brush fillBrush, Pen outlinePen, bool vertical, int length, int x, int y, int cellsize)
+        private static void DrawBoard(Graphics g, Brush textBrush, Font textFont, Pen linePen, int boardx, int boardy)
         {
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i <= boardWidth; i++)
             {
-                if (vertical)
-                    FreeDrawShipCell(g, fillBrush, outlinePen, x, y + i * cellsize, cellsize);
-                else
-                    FreeDrawShipCell(g, fillBrush, outlinePen, x + i * cellsize, y, cellsize);
-            }
-        }
-
-        private static void DrawBoard(Graphics g, Brush textBrush, Font textFont, Pen linePen, int boardx, int boardy, int boardwidth, int boardheight, int cellsize)
-        {
-            for (int i = 0; i <= boardwidth; i++)
-            {
-                int x = boardx + i * cellsize;
-                g.DrawLine(linePen, x, boardy, x, boardy + boardheight * cellsize);
+                int x = boardx + i * cellSize;
+                g.DrawLine(linePen, x, boardy, x, boardy + boardHeight * cellSize);
             }
 
-            for (int i = 0; i <= boardheight; i++)
+            for (int i = 0; i <= boardHeight; i++)
             {
-                int y = boardy + i * cellsize;
-                g.DrawLine(linePen, boardx, y, boardx + boardwidth * cellsize, y);
+                int y = boardy + i * cellSize;
+                g.DrawLine(linePen, boardx, y, boardx + boardWidth * cellSize, y);
             }
 
-            for (int i = 0; i < boardwidth; i++)
-            {
-                var number = (i + 1).ToString();
-                g.DrawString(number, textFont, textBrush, boardx + i * cellsize + (number.Length == 1 ? 3 : -3), boardy - cellsize);
-            }
+            for (int i = 0; i < boardWidth; i++)
+                g.DrawString(((char)('A' + i)).ToString(), textFont, textBrush, boardx + i * cellSize + 7, boardy - cellSize + 3);
 
             for (int i = 0; i < boardHeight; i++)
-                g.DrawString(((char)('A' + i)).ToString(), textFont, textBrush, boardx - cellsize, boardy + i * cellsize);
+            {
+                var number = (i + 1).ToString();
+                g.DrawString(number, textFont, textBrush, boardx - cellSize + (number.Length == 1 ? 4 : 0), boardy + i * cellSize + 4);
+            }
         }
 
         private static void DrawShipWindow(Graphics g, Pen pen, int x, int y, int size) => g.DrawRectangle(pen, x, y, size, size);
@@ -136,26 +130,39 @@ namespace BattleshipsClient
         {
             gfx = e.Graphics;
             //gfx.Clear(backgroundColor);
-            DrawBoard(gfx, boardTextBrush, boardFont, boardLinePen, boardX, boardY, boardWidth, boardHeight, cellSize);
+            DrawBoard(gfx, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
             DrawShipWindow(gfx, shipWindowPen, shipWindowX, shipWindowY, shipWindowSize);
+
+            int shipx, shipy;
             if (dragging)
             {
-                var mousePosition = PointToClient(Cursor.Position);
-                FreeDrawShip(gfx, shipFillBrush, shipOutlinePen, shipVertical, shipLength, mousePosition.X - dragOffsetX, mousePosition.Y - dragOffsetY, cellSize);
+                if (snapping)
+                {
+                    shipx = boardX + snapX * cellSize;
+                    shipy = boardY + snapY * cellSize;
+                }
+                else
+                {
+                    var mousePosition = PointToClient(Cursor.Position);
+                    shipx = mousePosition.X - dragOffsetX;
+                    shipy = mousePosition.Y - dragOffsetY;
+                }
             }
             else
             {
-                FreeDrawShip(gfx, shipFillBrush, shipOutlinePen, shipVertical, shipLength, shipX, shipY, cellSize);
+                shipx = shipX;
+                shipy = shipY;
             }
+
+            DrawShip(gfx, shipFillBrush, snapping ? shipHighlightPen : shipOutlinePen, shipVertical, shipLength, shipx, shipy);
         }
 
         private void MainWindow_MouseDown(object sender, MouseEventArgs e)
         {
-            int shipWidth;
-            int shipHeight;
-            GetShipDimensions(out shipWidth, out shipHeight);
+            int shipWidth, shipHeight;
+            GetShipDimensions(shipVertical, shipLength, false, out shipWidth, out shipHeight);
 
-            if (e.Button == MouseButtons.Left && e.X > shipX && e.X < shipX + shipWidth && e.Y > shipY && e.Y < shipY + shipHeight)
+            if (!dragging && e.Button == MouseButtons.Left && e.X >= shipX && e.X <= shipX + shipWidth && e.Y >= shipY && e.Y <= shipY + shipHeight)
             {
                 dragOffsetX = e.X - shipX;
                 dragOffsetY = e.Y - shipY;
@@ -170,7 +177,28 @@ namespace BattleshipsClient
 
         private void MainWindow_MouseMove(object sender, MouseEventArgs e)
         {
-            Invalidate();
+            if (dragging)
+            {
+                Snap(e.X, e.Y, dragOffsetX, dragOffsetY, shipLength, shipVertical, out snapping, out snapX, out snapY);
+                Invalidate();
+            }
+        }
+
+        private void Snap(int mx, int my, int offsetX, int offsetY, int shiplength, bool shipvertical, out bool snapping, out int snapX, out int snapY)
+        {
+            double adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
+            double adjustedOffsetY = (Math.Floor((double)offsetY / cellSize) + 0.5) * cellSize;
+
+            snapX = (int)Math.Round((mx - adjustedOffsetX - boardX) / cellSize);
+            snapY = (int)Math.Round((my - adjustedOffsetY - boardY) / cellSize);
+
+            int shipW, shipH;
+            GetShipDimensions(shipvertical, shiplength, true, out shipW, out shipH);
+            
+            snapping = snapX >= 0 && snapX < boardWidth &&
+                       snapY >= 0 && snapY < boardHeight &&
+                       snapX + shipW - 1 < boardWidth &&
+                       snapY + shipH - 1 < boardHeight;
         }
     }
 }
