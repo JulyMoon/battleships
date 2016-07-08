@@ -52,6 +52,11 @@ namespace BattleshipsClient
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
+            UpdateShipPosition();
+        }
+
+        private void UpdateShipPosition()
+        {
             int shipWidth, shipHeight;
             Battleships.GetShipDimensions(shipVertical, shipLength, out shipWidth, out shipHeight);
             ScaleUp(ref shipWidth, ref shipHeight);
@@ -156,33 +161,49 @@ namespace BattleshipsClient
 
         private void MainWindow_MouseDown(object sender, MouseEventArgs e)
         {
-            int shipWidth, shipHeight;
-            Battleships.GetShipDimensions(shipVertical, shipLength, out shipWidth, out shipHeight);
-            ScaleUp(ref shipWidth, ref shipHeight);
-
-            if (!dragging && e.Button == MouseButtons.Left && e.X >= shipX && e.X <= shipX + shipWidth && e.Y >= shipY && e.Y <= shipY + shipHeight)
+            if (e.Button == MouseButtons.Left)
             {
-                dragOffsetX = e.X - shipX;
-                dragOffsetY = e.Y - shipY;
-                dragging = true;
+                int shipWidth, shipHeight;
+                Battleships.GetShipDimensions(shipVertical, shipLength, out shipWidth, out shipHeight);
+                ScaleUp(ref shipWidth, ref shipHeight);
+
+                if (!dragging && e.X >= shipX && e.X <= shipX + shipWidth && e.Y >= shipY && e.Y <= shipY + shipHeight)
+                {
+                    dragOffsetX = e.X - shipX;
+                    dragOffsetY = e.Y - shipY;
+                    dragging = true;
+                }
+            }
+            else if (e.Button == MouseButtons.Right && dragging)
+            {
+                shipVertical = !shipVertical;
+                UpdateShipPosition();
+
+                int tmp = dragOffsetX;
+                dragOffsetX = dragOffsetY;
+                dragOffsetY = tmp;
             }
         }
 
         private void MainWindow_MouseUp(object sender, MouseEventArgs e)
         {
-            if (snapping)
+            if (e.Button == MouseButtons.Left)
             {
-                game.AddShip(shipVertical, shipLength, snapX, snapY);
+                if (snapping)
+                {
+                    game.AddShip(shipVertical, shipLength, snapX, snapY);
+                }
+                else
+                {
+
+                }
+
+                snapping = false;
+                dragging = false;
+
+                Invalidate();
             }
-            else
-            {
 
-            }
-
-            snapping = false;
-            dragging = false;
-
-            Invalidate();
         }
 
         private void MainWindow_MouseMove(object sender, MouseEventArgs e)
@@ -194,7 +215,7 @@ namespace BattleshipsClient
             }
         }
 
-        private void Snap(int mx, int my, int offsetX, int offsetY, int shiplength, bool shipvertical, out bool snapping, out int snapX, out int snapY)
+        private static void Snap(int mx, int my, int offsetX, int offsetY, int shiplength, bool shipvertical, out bool snapping, out int snapX, out int snapY)
         {
             double adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
             double adjustedOffsetY = (Math.Floor((double)offsetY / cellSize) + 0.5) * cellSize;
