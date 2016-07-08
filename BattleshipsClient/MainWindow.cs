@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -29,8 +30,8 @@ namespace BattleshipsClient
 
         private readonly Battleships game = new Battleships();
         private readonly List<Battleships.Ship.Properties> currentShips = new List<Battleships.Ship.Properties>();
-        private List<Battleships.Ship.Properties> setShips = new List<Battleships.Ship.Properties>();
-        private List<bool> setShipUsed = new List<bool>();
+        private List<Tuple<Battleships.Ship.Properties, bool>> setShips = new List<Tuple<Battleships.Ship.Properties, bool>>();
+        //                                               ^ this bool represents whether the ship was used or not
 
         private int dragIndex;
         private bool dragging;
@@ -61,10 +62,9 @@ namespace BattleshipsClient
 
         }
 
-        private void AdoptShipSet(IEnumerable<int> shipSet)
+        private void AdoptShipSet(ReadOnlyCollection<int> shipSet)
         {
             setShips.Clear();
-            setShipUsed.Clear();
 
             var shipTypes = shipSet.Distinct().OrderByDescending(size => size).ToList();
 
@@ -89,8 +89,7 @@ namespace BattleshipsClient
                 if (width > shipWindowWidth)
                     shipWindowWidth = width;
 
-                setShips.Add(new Battleships.Ship.Properties(shipSize, false, x, y));
-                setShipUsed.Add(false);
+                setShips.Add(Tuple.Create(new Battleships.Ship.Properties(shipSize, false, x, y), false));
             }
             
             shipWindowHeight = shipWindowPadding * 2 + shipTypes.Count * (cellSize + shipWindowShipMargin) - shipWindowShipMargin;
@@ -173,7 +172,7 @@ namespace BattleshipsClient
             DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
             DrawBoardShips(e.Graphics, shipFillBrush, shipOutlinePen, currentShips, boardX, boardY);
-            DrawFreeShips(e.Graphics, shipFillBrush, shipOutlinePen, setShips.Where((setShip, index) => !setShipUsed[index]));
+            DrawFreeShips(e.Graphics, shipFillBrush, shipOutlinePen, setShips.Where(tuple => !tuple.Item2).Select(tuple => tuple.Item1));
 
             if (dragging)
             {
@@ -200,15 +199,15 @@ namespace BattleshipsClient
             {
                 for (int i = 0; i < setShips.Count; i++)
                 {
-                    if (setShipUsed[i])
+                    if (setShips[i].Item2) // used
                         continue;
 
-                    var setShip = setShips[i];
+                    var setShip = setShips[i].Item1;
                     var shipRect = GetShipRectangle(setShip);
 
                     if (shipRect.IntersectsWith(new Rectangle(e.X, e.Y, 1, 1)))
                     {
-                        setShipUsed[i] = true;
+                        setShips[i] = Tuple.Create(setShip, true);
                         drag = setShip.Clone();
                         dragOffsetX = e.X - drag.X;
                         dragOffsetY = e.Y - drag.Y;
@@ -239,7 +238,7 @@ namespace BattleshipsClient
                 }
                 else if (dragging)
                 {
-                    setShipUsed[dragIndex] = false;
+                    setShips[dragIndex] = Tuple.Create(setShips[dragIndex].Item1, false);
                 }
 
                 snapping = false;
