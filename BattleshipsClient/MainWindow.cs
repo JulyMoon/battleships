@@ -1,13 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BattleshipsClient
@@ -32,16 +25,16 @@ namespace BattleshipsClient
         private static readonly Pen shipWindowPen = Pens.Navy;
         private static readonly Font boardFont = new Font("Consolas", 10);
 
-        private Battleships game = new Battleships();
-        private Graphics gfx;
-        private bool dragging = false;
+        private readonly Battleships game = new Battleships();
+        private readonly List<Battleships.Ship.Properties> currentShips = new List<Battleships.Ship.Properties>();
+        private bool dragging;
         private int dragOffsetX;
         private int dragOffsetY;
         private int shipLength = 4;
         private int shipX;
         private int shipY;
-        private bool shipVertical = true;
-        private bool snapping = false;
+        private bool shipVertical;
+        private bool snapping;
         private int snapX;
         private int snapY;
 
@@ -120,7 +113,7 @@ namespace BattleshipsClient
 
         private static void DrawShipWindow(Graphics g, Pen pen, int x, int y, int size) => g.DrawRectangle(pen, x, y, size, size);
 
-        private static void DrawShips(Graphics g, Brush fillBrush, Pen outlinePen, IEnumerable<Battleships.Ship> ships, int boardx, int boardy)
+        private static void DrawShips(Graphics g, Brush fillBrush, Pen outlinePen, List<Battleships.Ship.Properties> ships, int boardx, int boardy)
         {
             foreach (var ship in ships)
                 DrawShip(g, fillBrush, outlinePen, ship.IsVertical, ship.Size, boardx + ship.X * cellSize, boardy + ship.Y * cellSize);
@@ -128,12 +121,12 @@ namespace BattleshipsClient
 
         private void MainWindow_Paint(object sender, PaintEventArgs e)
         {
-            gfx = e.Graphics;
             //gfx.Clear(backgroundColor);
-            DrawBoard(gfx, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
-            DrawShipWindow(gfx, shipWindowPen, shipWindowX, shipWindowY, shipWindowSize);
 
-            DrawShips(gfx, shipFillBrush, shipOutlinePen, game.MyShips, boardX, boardY);
+            DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
+            DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowSize);
+
+            DrawShips(e.Graphics, shipFillBrush, shipOutlinePen, currentShips, boardX, boardY);
 
             int shipx, shipy;
             if (dragging)
@@ -156,7 +149,7 @@ namespace BattleshipsClient
                 shipy = shipY;
             }
 
-            DrawShip(gfx, shipFillBrush, snapping ? shipHighlightPen : shipOutlinePen, shipVertical, shipLength, shipx, shipy);
+            DrawShip(e.Graphics, shipFillBrush, snapping ? shipHighlightPen : shipOutlinePen, shipVertical, shipLength, shipx, shipy);
         }
 
         private void MainWindow_MouseDown(object sender, MouseEventArgs e)
@@ -191,11 +184,7 @@ namespace BattleshipsClient
             {
                 if (snapping)
                 {
-                    game.AddShip(shipVertical, shipLength, snapX, snapY);
-                }
-                else
-                {
-
+                    currentShips.Add(new Battleships.Ship.Properties(shipLength, shipVertical, snapX, snapY));
                 }
 
                 snapping = false;
@@ -217,8 +206,22 @@ namespace BattleshipsClient
 
         private static void Snap(int mx, int my, int offsetX, int offsetY, int shiplength, bool shipvertical, out bool snapping, out int snapX, out int snapY)
         {
-            double adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
-            double adjustedOffsetY = (Math.Floor((double)offsetY / cellSize) + 0.5) * cellSize;
+            // concise version
+            //double adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
+            //double adjustedOffsetY = (Math.Floor((double)offsetY / cellSize) + 0.5) * cellSize;
+
+            // performance friendly version
+            double adjustedOffsetX, adjustedOffsetY;
+            if (shipvertical)
+            {
+                adjustedOffsetX = cellSize / 2d;
+                adjustedOffsetY = (Math.Floor((double)offsetY / cellSize) + 0.5) * cellSize;
+            }
+            else
+            {
+                adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
+                adjustedOffsetY = cellSize / 2d;
+            }
 
             snapX = (int)Math.Round((mx - adjustedOffsetX - boardX) / cellSize);
             snapY = (int)Math.Round((my - adjustedOffsetY - boardY) / cellSize);

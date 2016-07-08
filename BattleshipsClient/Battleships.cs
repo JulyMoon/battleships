@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BattleshipsClient
 {
@@ -11,24 +9,37 @@ namespace BattleshipsClient
     {
         public struct Ship
         {
-            public readonly int Size;
-            public readonly int X, Y;
-            public readonly bool IsVertical;
-            private bool[] isAlive;
+            public struct Properties
+            {
+                public readonly int Size;
+                public readonly int X, Y;
+                public readonly bool IsVertical;
+
+                public Properties(int size, bool isVertical, int x, int y)
+                {
+                    Size = size;
+                    X = x;
+                    Y = y;
+                    IsVertical = isVertical;
+                }
+            }
+
+            public Properties Props;
+            
+            private readonly bool[] isAlive;
 
             public ReadOnlyCollection<bool> IsAlive => isAlive.ToList().AsReadOnly();
 
-            public Ship(int size, bool isVertical, int x, int y)
+            public Ship(Properties shipProps)
             {
-                Size = size;
-                X = x;
-                Y = y;
-                IsVertical = isVertical;
-                isAlive = new bool[Size];
+                Props = shipProps;
+                isAlive = new bool[Props.Size];
             }
+
+            public Ship(int size, bool isVertical, int x, int y) : this(new Properties(size, isVertical, x, y)) { }
         }
 
-        private static readonly int[] shipSet = new[] { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
+        private static readonly int[] shipSet = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
         public const int BoardWidth = 10;
         public const int BoardHeight = BoardWidth;
 
@@ -56,32 +67,39 @@ namespace BattleshipsClient
             }
         }
 
-        public static bool WithinBoard(bool vertical, int size, int x, int y)
+        public static bool WithinBoard(Ship.Properties props)
         {
             int width, height;
-            GetShipDimensions(vertical, size, out width, out height);
+            GetShipDimensions(props.IsVertical, props.Size, out width, out height);
 
-            return x >= 0 && x < BoardWidth &&
-                   y >= 0 && y < BoardHeight &&
-                   x + width - 1 < BoardWidth &&
-                   y + height - 1 < BoardHeight;
+            return props.X >= 0 && props.X < BoardWidth &&
+                   props.Y >= 0 && props.Y < BoardHeight &&
+                   props.X + width - 1 < BoardWidth &&
+                   props.Y + height - 1 < BoardHeight;
         }
 
-        private static bool WithinRules(List<Ship> shipsSoFar, int size)
+        public static bool WithinBoard(bool vertical, int size, int x, int y) => WithinBoard(new Ship.Properties(size, vertical, x, y));
+
+        /*private static bool WithinRules(List<Ship> shipsSoFar, int size)
         {
-            var setSoFar = shipsSoFar.Select((ship) => ship.Size).ToList();
+            var setSoFar = shipsSoFar.Select((ship) => ship.Props.Size).ToList();
             return setSoFar.Count((element) => element == size) < shipSet.Count((element) => element == size);
-        }
+        }*/
 
-        public void AddShip(bool vertical, int size, int x, int y)
+        public void AddShips(List<Ship.Properties> shipPropArray)
         {
-            if (!WithinBoard(vertical, size, x, y))
-                throw new ArgumentException("Your ship doesn't fit on the board");
+            if (!shipPropArray.Select((shipProps) => shipProps.Size).OrderBy(size => size).SequenceEqual(shipSet.OrderBy(size => size)))
+                throw new ArgumentException("Incorrect set of ships");
 
-            //if (!WithinRules(myShips, size))
-            //    throw new ArgumentException("There are already enough ships of that size");
+            foreach (var shipProps in shipPropArray)
+            {
+                if (!WithinBoard(shipProps))
+                    throw new ArgumentException("This ship doesn't fit on the board");
 
-            myShips.Add(new Ship(size, vertical, x, y));
+                // TODO: add a check for overlapping ships
+
+                myShips.Add(new Ship(shipProps));
+            }
         }
     }
 }
