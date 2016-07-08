@@ -22,6 +22,8 @@ namespace BattleshipsClient
                     Y = y;
                     IsVertical = isVertical;
                 }
+
+                public Properties Clone() => new Properties(Size, IsVertical, X, Y);
             }
 
             public Properties Props;
@@ -47,6 +49,7 @@ namespace BattleshipsClient
         private List<Ship> enemyShips = new List<Ship>();
 
         public ReadOnlyCollection<Ship> MyShips => myShips.AsReadOnly();
+        public static ReadOnlyCollection<int> ShipSet => Array.AsReadOnly(shipSet);
 
         public Battleships()
         {

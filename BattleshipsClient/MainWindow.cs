@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace BattleshipsClient
@@ -12,9 +13,10 @@ namespace BattleshipsClient
         private const int boardX = 40;
         private const int boardY = 40;
         private const int cellSize = 25;
-        private const int shipWindowSize = cellSize * 5;
         private const int shipWindowX = boardX + (boardWidth + 1) * cellSize;
         private const int shipWindowY = boardY;
+        private const int shipWindowPadding = 20;
+        private const int shipWindowShipMargin = 15;
 
         //private static readonly Color backgroundColor = Color.White;
         private static readonly Pen boardLinePen = new Pen(Color.FromArgb(180, 180, 255));
@@ -22,40 +24,85 @@ namespace BattleshipsClient
         private static readonly Brush shipFillBrush = new SolidBrush(Color.FromArgb(20, Color.Black));
         private static readonly Pen shipOutlinePen = new Pen(Color.Blue, 2);
         private static readonly Pen shipHighlightPen = new Pen(Color.Green, shipOutlinePen.Width);
-        private static readonly Pen shipWindowPen = Pens.Navy;
+        private static readonly Pen shipWindowPen = boardLinePen;
         private static readonly Font boardFont = new Font("Consolas", 10);
 
         private readonly Battleships game = new Battleships();
         private readonly List<Battleships.Ship.Properties> currentShips = new List<Battleships.Ship.Properties>();
+        private List<Battleships.Ship.Properties> setShips = new List<Battleships.Ship.Properties>();
+        private List<bool> setShipUsed = new List<bool>();
+
+        private int dragIndex;
         private bool dragging;
         private int dragOffsetX;
         private int dragOffsetY;
-        private int shipLength = 4;
-        private int shipX;
-        private int shipY;
-        private bool shipVertical;
+        private Battleships.Ship.Properties drag;
+
         private bool snapping;
         private int snapX;
         private int snapY;
 
+        private int shipWindowWidth;
+        private int shipWindowHeight;
+
         public MainWindow()
         {
             InitializeComponent();
+            AdoptShipSet(Battleships.ShipSet);
         }
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            UpdateShipPosition();
+
         }
 
-        private void UpdateShipPosition()
+        private void MainWindow_Shown(object sender, EventArgs e)
+        {
+
+        }
+
+        private void AdoptShipSet(IEnumerable<int> shipSet)
+        {
+            setShips.Clear();
+            setShipUsed.Clear();
+
+            var shipTypes = shipSet.Distinct().OrderByDescending(size => size).ToList();
+
+            int count = 0;
+            int previousType = -1;
+            foreach (int shipSize in shipSet)
+            {
+                if (previousType == shipSize)
+                {
+                    count++;
+                }
+                else
+                {
+                    count = 0;
+                    previousType = shipSize;
+                }
+
+                int x = shipWindowX + shipWindowPadding + count * (shipSize * cellSize + shipWindowShipMargin);
+                int y = shipWindowY + shipWindowPadding + shipTypes.IndexOf(shipSize) * (cellSize + shipWindowShipMargin);
+
+                int width = shipWindowPadding * 2 + (count + 1) * (shipSize * cellSize + shipWindowShipMargin) - shipWindowShipMargin;
+                if (width > shipWindowWidth)
+                    shipWindowWidth = width;
+
+                setShips.Add(new Battleships.Ship.Properties(shipSize, false, x, y));
+                setShipUsed.Add(false);
+            }
+            
+            shipWindowHeight = shipWindowPadding * 2 + shipTypes.Count * (cellSize + shipWindowShipMargin) - shipWindowShipMargin;
+        }
+
+        private static Rectangle GetShipRectangle(Battleships.Ship.Properties shipProps)
         {
             int shipWidth, shipHeight;
-            Battleships.GetShipDimensions(shipVertical, shipLength, out shipWidth, out shipHeight);
+            Battleships.GetShipDimensions(shipProps.IsVertical, shipProps.Size, out shipWidth, out shipHeight);
             ScaleUp(ref shipWidth, ref shipHeight);
 
-            shipX = shipWindowX + (shipWindowSize - shipWidth) / 2;
-            shipY = shipWindowY + (shipWindowSize - shipHeight) / 2;
+            return new Rectangle(shipProps.X, shipProps.Y, shipWidth, shipHeight);
         }
 
         private static void ScaleUp(ref int width, ref int height)
@@ -64,27 +111,16 @@ namespace BattleshipsClient
             height *= cellSize;
         }
 
-        private void MainWindow_Shown(object sender, EventArgs e)
+        private static void DrawShip(Graphics g, Brush fillBrush, Pen outlinePen, Battleships.Ship.Properties shipProps)
         {
-
+            var shipRect = GetShipRectangle(shipProps);
+            g.FillRectangle(fillBrush, shipRect);
+            g.DrawRectangle(outlinePen, shipRect);
         }
 
-        /*private static void DrawShipCell(Graphics g, Brush fillBrush, Pen outlinePen, int x, int y)
+        private static void DrawShip(Graphics g, Brush fillBrush, Pen outlinePen, Battleships.Ship ship)
         {
-            var ship = new Rectangle(x, y, cellSize, cellSize);
-            g.FillRectangle(fillBrush, ship);
-            g.DrawRectangle(outlinePen, ship);
-        }*/
-
-        private static void DrawShip(Graphics g, Brush fillBrush, Pen outlinePen, bool vertical, int length, int x, int y)
-        {
-            int shipWidth, shipHeight;
-            Battleships.GetShipDimensions(vertical, length, out shipWidth, out shipHeight);
-            ScaleUp(ref shipWidth, ref shipHeight);
-
-            var ship = new Rectangle(x, y, shipWidth, shipHeight);
-            g.FillRectangle(fillBrush, ship);
-            g.DrawRectangle(outlinePen, ship);
+            throw new NotImplementedException();
         }
 
         private static void DrawBoard(Graphics g, Brush textBrush, Font textFont, Pen linePen, int boardx, int boardy)
@@ -111,12 +147,22 @@ namespace BattleshipsClient
             }
         }
 
-        private static void DrawShipWindow(Graphics g, Pen pen, int x, int y, int size) => g.DrawRectangle(pen, x, y, size, size);
+        private static void DrawShipWindow(Graphics g, Pen pen, int x, int y, int width, int height) => g.DrawRectangle(pen, x, y, width, height);
 
-        private static void DrawShips(Graphics g, Brush fillBrush, Pen outlinePen, List<Battleships.Ship.Properties> ships, int boardx, int boardy)
+        private static void DrawBoardShips(Graphics g, Brush fillBrush, Pen outlinePen, IEnumerable<Battleships.Ship.Properties> ships, int boardx, int boardy)
         {
             foreach (var ship in ships)
-                DrawShip(g, fillBrush, outlinePen, ship.IsVertical, ship.Size, boardx + ship.X * cellSize, boardy + ship.Y * cellSize);
+            {
+                DrawShip(g, fillBrush, outlinePen, new Battleships.Ship.Properties(ship.Size, ship.IsVertical, boardx + ship.X * cellSize, boardy + ship.Y * cellSize));
+            }
+        }
+
+        private static void DrawFreeShips(Graphics g, Brush fillBrush, Pen outlinePen, IEnumerable<Battleships.Ship.Properties> ships)
+        {
+            foreach (var ship in ships)
+            {
+                DrawShip(g, fillBrush, outlinePen, new Battleships.Ship.Properties(ship.Size, ship.IsVertical, ship.X, ship.Y));
+            }
         }
 
         private void MainWindow_Paint(object sender, PaintEventArgs e)
@@ -124,53 +170,58 @@ namespace BattleshipsClient
             //gfx.Clear(backgroundColor);
 
             DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
-            DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowSize);
+            DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
-            DrawShips(e.Graphics, shipFillBrush, shipOutlinePen, currentShips, boardX, boardY);
+            DrawBoardShips(e.Graphics, shipFillBrush, shipOutlinePen, currentShips, boardX, boardY);
+            DrawFreeShips(e.Graphics, shipFillBrush, shipOutlinePen, setShips.Where((setShip, index) => !setShipUsed[index]));
 
-            int shipx, shipy;
             if (dragging)
             {
+                int dragx, dragy;
                 if (snapping)
                 {
-                    shipx = boardX + snapX * cellSize;
-                    shipy = boardY + snapY * cellSize;
+                    dragx = boardX + snapX * cellSize;
+                    dragy = boardY + snapY * cellSize;
                 }
                 else
                 {
                     var mousePosition = PointToClient(Cursor.Position);
-                    shipx = mousePosition.X - dragOffsetX;
-                    shipy = mousePosition.Y - dragOffsetY;
+                    dragx = mousePosition.X - dragOffsetX;
+                    dragy = mousePosition.Y - dragOffsetY;
                 }
-            }
-            else
-            {
-                shipx = shipX;
-                shipy = shipY;
-            }
 
-            DrawShip(e.Graphics, shipFillBrush, snapping ? shipHighlightPen : shipOutlinePen, shipVertical, shipLength, shipx, shipy);
+                DrawShip(e.Graphics, shipFillBrush, snapping ? shipHighlightPen : shipOutlinePen, new Battleships.Ship.Properties(drag.Size, drag.IsVertical, dragx, dragy));
+            }
         }
 
         private void MainWindow_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
-                int shipWidth, shipHeight;
-                Battleships.GetShipDimensions(shipVertical, shipLength, out shipWidth, out shipHeight);
-                ScaleUp(ref shipWidth, ref shipHeight);
-
-                if (!dragging && e.X >= shipX && e.X <= shipX + shipWidth && e.Y >= shipY && e.Y <= shipY + shipHeight)
+                for (int i = 0; i < setShips.Count; i++)
                 {
-                    dragOffsetX = e.X - shipX;
-                    dragOffsetY = e.Y - shipY;
-                    dragging = true;
+                    if (setShipUsed[i])
+                        continue;
+
+                    var setShip = setShips[i];
+                    var shipRect = GetShipRectangle(setShip);
+
+                    if (shipRect.IntersectsWith(new Rectangle(e.X, e.Y, 1, 1)))
+                    {
+                        setShipUsed[i] = true;
+                        drag = setShip.Clone();
+                        dragOffsetX = e.X - drag.X;
+                        dragOffsetY = e.Y - drag.Y;
+                        dragIndex = i;
+                        dragging = true;
+
+                        break;
+                    }
                 }
             }
-            else if (e.Button == MouseButtons.Right && dragging)
+            else if (e.Button == MouseButtons.Right && dragging && drag.Size != 1)
             {
-                shipVertical = !shipVertical;
-                UpdateShipPosition();
+                drag = new Battleships.Ship.Properties(drag.Size, !drag.IsVertical, drag.X, drag.Y);
 
                 int tmp = dragOffsetX;
                 dragOffsetX = dragOffsetY;
@@ -184,7 +235,11 @@ namespace BattleshipsClient
             {
                 if (snapping)
                 {
-                    currentShips.Add(new Battleships.Ship.Properties(shipLength, shipVertical, snapX, snapY));
+                    currentShips.Add(new Battleships.Ship.Properties(drag.Size, drag.IsVertical, snapX, snapY));
+                }
+                else if (dragging)
+                {
+                    setShipUsed[dragIndex] = false;
                 }
 
                 snapping = false;
@@ -199,7 +254,7 @@ namespace BattleshipsClient
         {
             if (dragging)
             {
-                Snap(e.X, e.Y, dragOffsetX, dragOffsetY, shipLength, shipVertical, out snapping, out snapX, out snapY);
+                Snap(e.X, e.Y, dragOffsetX, dragOffsetY, drag.Size, drag.IsVertical, out snapping, out snapX, out snapY);
                 Invalidate();
             }
         }
