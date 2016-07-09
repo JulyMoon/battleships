@@ -9,7 +9,7 @@ namespace BattleshipsClient
     {
         public struct Ship
         {
-            public struct Properties
+            public class Properties
             {
                 public readonly int Size;
                 public readonly int X, Y;
