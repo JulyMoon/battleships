@@ -46,7 +46,6 @@ namespace BattleshipsClient
         public const int BoardHeight = BoardWidth;
 
         private List<Ship> myShips = new List<Ship>();
-        private List<Ship> enemyShips = new List<Ship>();
 
         public ReadOnlyCollection<Ship> MyShips => myShips.AsReadOnly();
         public static ReadOnlyCollection<int> ShipSet => Array.AsReadOnly(shipSet);
@@ -83,15 +82,9 @@ namespace BattleshipsClient
 
         public static bool WithinBoard(bool vertical, int size, int x, int y) => WithinBoard(new Ship.Properties(size, vertical, x, y));
 
-        /*private static bool WithinRules(List<Ship> shipsSoFar, int size)
-        {
-            var setSoFar = shipsSoFar.Select((ship) => ship.Props.Size).ToList();
-            return setSoFar.Count((element) => element == size) < shipSet.Count((element) => element == size);
-        }*/
-
         public void AddShips(List<Ship.Properties> shipPropArray)
         {
-            if (!shipPropArray.Select((shipProps) => shipProps.Size).OrderBy(size => size).SequenceEqual(shipSet.OrderBy(size => size)))
+            if (!shipPropArray.Select(shipProps => shipProps.Size).OrderBy(size => size).SequenceEqual(shipSet.OrderBy(size => size)))
                 throw new ArgumentException("Incorrect set of ships");
 
             foreach (var shipProps in shipPropArray)

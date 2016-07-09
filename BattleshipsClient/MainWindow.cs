@@ -22,7 +22,7 @@ namespace BattleshipsClient
         //private static readonly Color backgroundColor = Color.White;
         private static readonly Pen boardLinePen = new Pen(Color.FromArgb(180, 180, 255));
         private static readonly Brush boardTextBrush = Brushes.Black;
-        private static readonly Brush shipFillBrush = new SolidBrush(Color.FromArgb(20, Color.Black));
+        private static readonly Brush shipFillBrush = Brushes.Transparent;
         private static readonly Pen shipOutlinePen = new Pen(Color.Blue, 2);
         private static readonly Pen shipHighlightPen = new Pen(Color.Green, shipOutlinePen.Width);
         private static readonly Pen shipWindowPen = boardLinePen;
@@ -195,36 +195,28 @@ namespace BattleshipsClient
 
         private void MainWindow_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
+            if (e.Button != MouseButtons.Left)
+                return;
+
+            for (int i = 0; i < setShips.Count; i++)
             {
-                for (int i = 0; i < setShips.Count; i++)
-                {
-                    if (setShips[i].Item2) // used
-                        continue;
+                if (setShips[i].Item2) // used
+                    continue;
 
-                    var setShip = setShips[i].Item1;
-                    var shipRect = GetShipRectangle(setShip);
+                var setShip = setShips[i].Item1;
+                var shipRect = GetShipRectangle(setShip);
 
-                    if (shipRect.IntersectsWith(new Rectangle(e.X, e.Y, 1, 1)))
-                    {
-                        setShips[i] = Tuple.Create(setShip, true);
-                        drag = setShip.Clone();
-                        dragOffsetX = e.X - drag.X;
-                        dragOffsetY = e.Y - drag.Y;
-                        dragIndex = i;
-                        dragging = true;
+                if (!shipRect.IntersectsWith(new Rectangle(e.X, e.Y, 1, 1)))
+                    continue;
 
-                        break;
-                    }
-                }
-            }
-            else if (e.Button == MouseButtons.Right && dragging && drag.Size != 1)
-            {
-                drag = new Battleships.Ship.Properties(drag.Size, !drag.IsVertical, drag.X, drag.Y);
+                setShips[i] = Tuple.Create(setShip, true);
+                drag = setShip.Clone();
+                dragOffsetX = e.X - drag.X;
+                dragOffsetY = e.Y - drag.Y;
+                dragIndex = i;
+                dragging = true;
 
-                int tmp = dragOffsetX;
-                dragOffsetX = dragOffsetY;
-                dragOffsetY = tmp;
+                break;
             }
         }
 
@@ -246,24 +238,39 @@ namespace BattleshipsClient
 
                 Invalidate();
             }
+            else if (e.Button == MouseButtons.Right && dragging && drag.Size != 1)
+            {
+                drag = new Battleships.Ship.Properties(drag.Size, !drag.IsVertical, drag.X, drag.Y);
 
+                int tmp = dragOffsetX;
+                dragOffsetX = dragOffsetY;
+                dragOffsetY = tmp;
+
+                SnapInvalidate(e);
+            }
         }
 
         private void MainWindow_MouseMove(object sender, MouseEventArgs e)
         {
             if (dragging)
             {
-                Snap(e.X, e.Y, dragOffsetX, dragOffsetY, drag.Size, drag.IsVertical, out snapping, out snapX, out snapY);
-                Invalidate();
+                SnapInvalidate(e);
             }
+        }
+
+        private void SnapInvalidate(MouseEventArgs e)
+        {
+            Snap(e.X, e.Y, dragOffsetX, dragOffsetY, drag.Size, drag.IsVertical, out snapping, out snapX, out snapY);
+            Invalidate();
         }
 
         private static void Snap(int mx, int my, int offsetX, int offsetY, int shiplength, bool shipvertical, out bool snapping, out int snapX, out int snapY)
         {
             // concise version
-            //double adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
-            //double adjustedOffsetY = (Math.Floor((double)offsetY / cellSize) + 0.5) * cellSize;
+            double adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
+            double adjustedOffsetY = (Math.Floor((double)offsetY / cellSize) + 0.5) * cellSize;
 
+            /*
             // performance friendly version
             double adjustedOffsetX, adjustedOffsetY;
             if (shipvertical)
@@ -276,6 +283,7 @@ namespace BattleshipsClient
                 adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
                 adjustedOffsetY = cellSize / 2d;
             }
+            */
 
             snapX = (int)Math.Round((mx - adjustedOffsetX - boardX) / cellSize);
             snapY = (int)Math.Round((my - adjustedOffsetY - boardY) / cellSize);
