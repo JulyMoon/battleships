@@ -23,8 +23,8 @@ namespace BattleshipsClient
         private static readonly Pen boardLinePen = new Pen(Color.FromArgb(180, 180, 255));
         private static readonly Brush boardTextBrush = Brushes.Black;
         private static readonly Brush shipFillBrush = Brushes.Transparent;
-        private static readonly Pen shipOutlinePen = new Pen(Color.Blue, 2);
-        private static readonly Pen shipHighlightPen = new Pen(Color.Green, shipOutlinePen.Width);
+        private static readonly Pen shipOutlinePen = new Pen(Color.DodgerBlue, 3);
+        private static readonly Pen shipHighlightPen = new Pen(Color.LimeGreen, shipOutlinePen.Width);
         private static readonly Pen shipWindowPen = boardLinePen;
         private static readonly Font boardFont = new Font("Consolas", 10);
 
@@ -118,10 +118,7 @@ namespace BattleshipsClient
             g.DrawRectangle(outlinePen, shipRect);
         }
 
-        private static void DrawShip(Graphics g, Brush fillBrush, Pen outlinePen, Battleships.Ship ship)
-        {
-            throw new NotImplementedException();
-        }
+        //private static void DrawShip(Graphics g, Brush fillBrush, Pen outlinePen, Battleships.Ship ship)
 
         private static void DrawBoard(Graphics g, Brush textBrush, Font textFont, Pen linePen, int boardx, int boardy)
         {
@@ -172,8 +169,8 @@ namespace BattleshipsClient
             DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
             DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
-            DrawBoardShips(e.Graphics, shipFillBrush, shipOutlinePen, currentShips.Where(tuple => !tuple.Item2).Select(tuple => tuple.Item1), boardX, boardY);
-            DrawFreeShips(e.Graphics, shipFillBrush, shipOutlinePen, setShips.Where(tuple => !tuple.Item2).Select(tuple => tuple.Item1));
+            DrawBoardShips(e.Graphics, shipFillBrush, shipOutlinePen, GetNotUsedShips(currentShips), boardX, boardY);
+            DrawFreeShips(e.Graphics, shipFillBrush, shipOutlinePen, GetNotUsedShips(setShips));
 
             if (dragging)
             {
@@ -307,13 +304,16 @@ namespace BattleshipsClient
             }
         }
 
+        private static IEnumerable<Battleships.Ship.Properties> GetNotUsedShips(List<Tuple<Battleships.Ship.Properties, bool>> ships)
+            => ships.Where(tuple => !tuple.Item2).Select(tuple => tuple.Item1);
+
         private void SnapInvalidate(MouseEventArgs e)
         {
-            Snap(e.X, e.Y, dragOffsetX, dragOffsetY, drag.Size, drag.IsVertical, out snapping, out snapX, out snapY);
+            Snap(GetNotUsedShips(currentShips), e.X, e.Y, dragOffsetX, dragOffsetY, drag.Size, drag.IsVertical, out snapping, out snapX, out snapY);
             Invalidate();
         }
 
-        private static void Snap(int mx, int my, int offsetX, int offsetY, int shiplength, bool shipvertical, out bool snapping, out int snapX, out int snapY)
+        private static void Snap(IEnumerable<Battleships.Ship.Properties> ships, int mx, int my, int offsetX, int offsetY, int shipsize, bool shipvertical, out bool snapping, out int snapX, out int snapY)
         {
             // concise version
             double adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
@@ -337,7 +337,8 @@ namespace BattleshipsClient
             snapX = (int)Math.Round((mx - adjustedOffsetX - boardX) / cellSize);
             snapY = (int)Math.Round((my - adjustedOffsetY - boardY) / cellSize);
 
-            snapping = Battleships.WithinBoard(shipvertical, shiplength, snapX, snapY);
+            snapping = Battleships.WithinBoard(new Battleships.Ship.Properties(shipsize, shipvertical, snapX, snapY)) &&
+                       !Battleships.Overlaps(ships, new Battleships.Ship.Properties(shipsize, shipvertical, snapX, snapY));
         }
     }
 }
