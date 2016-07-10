@@ -196,60 +196,69 @@ namespace BattleshipsClient
 
         private static bool IntersectsWithMouse(MouseEventArgs e, Rectangle rect) => rect.IntersectsWith(new Rectangle(e.X, e.Y, 1, 1));
 
-        private void MainWindow_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button != MouseButtons.Left)
-                return;
+        private static Battleships.Ship.Properties GetAbsoluteShip(Battleships.Ship.Properties ship)
+            => new Battleships.Ship.Properties(ship.Size,
+                                               ship.IsVertical,
+                                               boardX + ship.X * cellSize,
+                                               boardY + ship.Y * cellSize);
 
-            bool intersectionFound = false;
-            Battleships.Ship.Properties ship = null, absoluteShip = null;
+        private bool GetShipBelowMouse(MouseEventArgs e, out int index, out bool isSetShip)
+        {
             for (int i = 0; i < setShips.Count; i++)
             {
                 if (setShips[i].Item2)
                     continue;
 
-                ship = setShips[i].Item1;
-                absoluteShip = ship;
+                if (!IntersectsWithMouse(e, GetShipRectangle(setShips[i].Item1)))
+                    continue;
+                
+                isSetShip = true;
+                index = i;
 
-                if (!IntersectsWithMouse(e, GetShipRectangle(absoluteShip)))
+                return true;
+            }
+
+            for (int i = 0; i < currentShips.Count; i++)
+            {
+                if (currentShips[i].Item2)
                     continue;
 
-                intersectionFound = true;
-                draggingSetShip = true;
-                dragIndex = i;
-                break;
+                if (!IntersectsWithMouse(e, GetShipRectangle(GetAbsoluteShip(currentShips[i].Item1))))
+                    continue;
+
+                isSetShip = false;
+                index = i;
+
+                return true;
             }
 
-            if (!intersectionFound)
-            {
-                for (int i = 0; i < currentShips.Count; i++)
-                {
-                    if (currentShips[i].Item2)
-                        continue;
+            index = -1;
+            isSetShip = false;
 
-                    ship = currentShips[i].Item1;
-                    absoluteShip = new Battleships.Ship.Properties(ship.Size, ship.IsVertical, boardX + ship.X * cellSize, boardY + ship.Y * cellSize);
+            return false;
+        }
 
-                    if (!IntersectsWithMouse(e, GetShipRectangle(absoluteShip)))
-                        continue;
-
-                    intersectionFound = true;
-                    draggingSetShip = false;
-                    dragIndex = i;
-                    break;
-                }
-            }
-
-            if (!intersectionFound)
+        private void MainWindow_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Left)
+                return;
+            
+            if (!GetShipBelowMouse(e, out dragIndex, out draggingSetShip))
                 return;
 
-            var usedShip = Tuple.Create(ship, true);
             if (draggingSetShip)
-                setShips[dragIndex] = usedShip;
+            {
+                var ship = setShips[dragIndex].Item1;
+                setShips[dragIndex] = Tuple.Create(ship, true);
+                drag = ship.Clone();
+            }
             else
-                currentShips[dragIndex] = usedShip;
+            {
+                var ship = currentShips[dragIndex].Item1;
+                currentShips[dragIndex] = Tuple.Create(ship, true);
+                drag = GetAbsoluteShip(ship).Clone();
+            }
 
-            drag = absoluteShip.Clone();
             dragOffsetX = e.X - drag.X;
             dragOffsetY = e.Y - drag.Y;
             dragging = true;
