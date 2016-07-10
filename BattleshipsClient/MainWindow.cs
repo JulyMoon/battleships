@@ -53,15 +53,9 @@ namespace BattleshipsClient
             AdoptShipSet(Battleships.ShipSet);
         }
 
-        private void MainWindow_Load(object sender, EventArgs e)
-        {
+        private void MainWindow_Load(object sender, EventArgs e) { }
 
-        }
-
-        private void MainWindow_Shown(object sender, EventArgs e)
-        {
-
-        }
+        private void MainWindow_Shown(object sender, EventArgs e) { }
 
         private void AdoptShipSet(ReadOnlyCollection<int> shipSet)
         {
@@ -100,15 +94,10 @@ namespace BattleshipsClient
         {
             int shipWidth, shipHeight;
             Battleships.GetShipDimensions(shipProps.IsVertical, shipProps.Size, out shipWidth, out shipHeight);
-            ScaleUp(ref shipWidth, ref shipHeight);
+            shipWidth *= cellSize;
+            shipHeight *= cellSize;
 
             return new Rectangle(shipProps.X, shipProps.Y, shipWidth, shipHeight);
-        }
-
-        private static void ScaleUp(ref int width, ref int height)
-        {
-            width *= cellSize;
-            height *= cellSize;
         }
 
         private static void DrawShip(Graphics g, Brush fillBrush, Pen outlinePen, Battleships.Ship.Properties shipProps)
@@ -164,8 +153,6 @@ namespace BattleshipsClient
 
         private void MainWindow_Paint(object sender, PaintEventArgs e)
         {
-            //gfx.Clear(backgroundColor);
-
             DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
             DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
@@ -194,10 +181,7 @@ namespace BattleshipsClient
         private static bool IntersectsWithMouse(MouseEventArgs e, Rectangle rect) => rect.IntersectsWith(new Rectangle(e.X, e.Y, 1, 1));
 
         private static Battleships.Ship.Properties GetAbsoluteShip(Battleships.Ship.Properties ship)
-            => new Battleships.Ship.Properties(ship.Size,
-                                               ship.IsVertical,
-                                               boardX + ship.X * cellSize,
-                                               boardY + ship.Y * cellSize);
+            => new Battleships.Ship.Properties(ship.Size, ship.IsVertical, boardX + ship.X * cellSize, boardY + ship.Y * cellSize);
 
         private bool GetShipBelowMouse(MouseEventArgs e, out int index, out bool isSetShip)
         {
@@ -337,8 +321,9 @@ namespace BattleshipsClient
             snapX = (int)Math.Round((mx - adjustedOffsetX - boardX) / cellSize);
             snapY = (int)Math.Round((my - adjustedOffsetY - boardY) / cellSize);
 
-            snapping = Battleships.WithinBoard(new Battleships.Ship.Properties(shipsize, shipvertical, snapX, snapY)) &&
-                       !Battleships.Overlaps(ships, new Battleships.Ship.Properties(shipsize, shipvertical, snapX, snapY));
+            var ship = new Battleships.Ship.Properties(shipsize, shipvertical, snapX, snapY);
+
+            snapping = Battleships.WithinBoard(ship) && !Battleships.Overlaps(ships, ship);
         }
     }
 }
