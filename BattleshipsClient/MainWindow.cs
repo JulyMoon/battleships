@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BattleshipsClient
@@ -23,8 +25,8 @@ namespace BattleshipsClient
         private static readonly Pen boardLinePen = new Pen(Color.FromArgb(180, 180, 255));
         private static readonly Brush boardTextBrush = Brushes.Black;
         private static readonly Brush shipFillBrush = Brushes.Transparent;
-        private static readonly Pen shipOutlinePen = new Pen(Color.DodgerBlue, 3);
-        private static readonly Pen shipHighlightPen = new Pen(Color.LimeGreen, shipOutlinePen.Width);
+        private static readonly Pen shipOutlinePen = new Pen(Color.FromArgb(0, 90, 156), 3);
+        private static readonly Pen shipHighlightPen = new Pen(Color.ForestGreen, shipOutlinePen.Width);
         private static readonly Pen shipWindowPen = boardLinePen;
         private static readonly Font boardFont = new Font("Consolas", 10);
 
@@ -46,6 +48,13 @@ namespace BattleshipsClient
 
         private int shipWindowWidth;
         private int shipWindowHeight;
+
+        private enum Stage
+        {
+            Connection, Placement, Playing
+        }
+
+        private Stage stage = Stage.Connection;
 
         public MainWindow()
         {
@@ -153,6 +162,9 @@ namespace BattleshipsClient
 
         private void MainWindow_Paint(object sender, PaintEventArgs e)
         {
+            if (stage != Stage.Placement)
+                return;
+
             DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
             DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
@@ -221,6 +233,9 @@ namespace BattleshipsClient
 
         private void MainWindow_MouseDown(object sender, MouseEventArgs e)
         {
+            if (stage != Stage.Placement)
+                return;
+
             if (e.Button != MouseButtons.Left)
                 return;
             
@@ -249,6 +264,9 @@ namespace BattleshipsClient
 
         private void MainWindow_MouseUp(object sender, MouseEventArgs e)
         {
+            if (stage != Stage.Placement)
+                return;
+
             if (e.Button == MouseButtons.Left)
             {
                 if (snapping)
@@ -282,6 +300,9 @@ namespace BattleshipsClient
 
         private void MainWindow_MouseMove(object sender, MouseEventArgs e)
         {
+            if (stage != Stage.Placement)
+                return;
+
             if (dragging)
             {
                 SnapInvalidate(e);
@@ -324,6 +345,33 @@ namespace BattleshipsClient
             var ship = new Battleships.Ship.Properties(shipsize, shipvertical, snapX, snapY);
 
             snapping = Battleships.WithinBoard(ship) && !Battleships.Overlaps(ships, ship);
+        }
+
+        private async void connectButton_Click(object sender, EventArgs e)
+        {
+            await Connect();
+        }
+
+        private async Task Connect()
+        {
+            connectButton.Enabled = false;
+            nameTextBox.Enabled = false;
+            await Task.Delay(500);
+            ToggleConnectControls(false);
+            stage = Stage.Placement;
+            Invalidate();
+        }
+
+        private void ToggleConnectControls(bool state)
+        {
+            SuspendLayout();
+            nameTextBox.Enabled = state;
+            nameTextBox.Visible = state;
+            connectButton.Enabled = state;
+            connectButton.Visible = state;
+            connectionLabel.Enabled = state;
+            connectionLabel.Visible = state;
+            ResumeLayout();
         }
     }
 }

@@ -28,7 +28,37 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.nameTextBox = new System.Windows.Forms.TextBox();
+            this.connectButton = new System.Windows.Forms.Button();
+            this.connectionLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
+            // 
+            // nameTextBox
+            // 
+            this.nameTextBox.Font = new System.Drawing.Font("Trebuchet MS", 14F);
+            this.nameTextBox.Location = new System.Drawing.Point(242, 144);
+            this.nameTextBox.Name = "nameTextBox";
+            this.nameTextBox.Size = new System.Drawing.Size(138, 29);
+            this.nameTextBox.TabIndex = 0;
+            this.nameTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // connectButton
+            // 
+            this.connectButton.Location = new System.Drawing.Point(242, 179);
+            this.connectButton.Name = "connectButton";
+            this.connectButton.Size = new System.Drawing.Size(138, 29);
+            this.connectButton.TabIndex = 1;
+            this.connectButton.Text = "Connect";
+            this.connectButton.UseVisualStyleBackColor = true;
+            this.connectButton.Click += new System.EventHandler(this.connectButton_Click);
+            // 
+            // connectionLabel
+            // 
+            this.connectionLabel.Location = new System.Drawing.Point(239, 211);
+            this.connectionLabel.Name = "connectionLabel";
+            this.connectionLabel.Size = new System.Drawing.Size(141, 29);
+            this.connectionLabel.TabIndex = 2;
+            this.connectionLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // MainWindow
             // 
@@ -36,6 +66,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(596, 350);
+            this.Controls.Add(this.connectionLabel);
+            this.Controls.Add(this.connectButton);
+            this.Controls.Add(this.nameTextBox);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
@@ -49,10 +82,15 @@
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MainWindow_MouseMove);
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.MainWindow_MouseUp);
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
         #endregion
+
+        private System.Windows.Forms.TextBox nameTextBox;
+        private System.Windows.Forms.Button connectButton;
+        private System.Windows.Forms.Label connectionLabel;
     }
 }
 
