@@ -31,6 +31,7 @@
             this.nameTextBox = new System.Windows.Forms.TextBox();
             this.connectButton = new System.Windows.Forms.Button();
             this.connectionLabel = new System.Windows.Forms.Label();
+            this.doneButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // nameTextBox
@@ -60,12 +61,24 @@
             this.connectionLabel.TabIndex = 2;
             this.connectionLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // doneButton
+            // 
+            this.doneButton.Enabled = false;
+            this.doneButton.Location = new System.Drawing.Point(12, 12);
+            this.doneButton.Name = "doneButton";
+            this.doneButton.Size = new System.Drawing.Size(138, 29);
+            this.doneButton.TabIndex = 3;
+            this.doneButton.Text = "Done";
+            this.doneButton.UseVisualStyleBackColor = true;
+            this.doneButton.Visible = false;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(596, 350);
+            this.Controls.Add(this.doneButton);
             this.Controls.Add(this.connectionLabel);
             this.Controls.Add(this.connectButton);
             this.Controls.Add(this.nameTextBox);
@@ -91,6 +104,7 @@
         private System.Windows.Forms.TextBox nameTextBox;
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.Label connectionLabel;
+        private System.Windows.Forms.Button doneButton;
     }
 }
 

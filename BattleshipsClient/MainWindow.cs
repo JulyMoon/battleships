@@ -16,9 +16,9 @@ namespace BattleshipsClient
         private const int boardX = 40;
         private const int boardY = 40;
         private const int cellSize = 25;
-        private const int shipWindowX = boardX + (boardWidth + 1) * cellSize;
+        private const int shipWindowX = boardX + boardWidth * cellSize + padding;
         private const int shipWindowY = boardY;
-        private const int shipWindowPadding = 20;
+        private const int padding = 20;
         private const int shipWindowShipMargin = 15;
 
         //private static readonly Color backgroundColor = Color.White;
@@ -60,6 +60,14 @@ namespace BattleshipsClient
         {
             InitializeComponent();
             AdoptShipSet(Battleships.ShipSet);
+            PlaceDoneButton();
+        }
+
+        private void PlaceDoneButton()
+        {
+            SuspendLayout();
+            doneButton.Location = new Point(shipWindowX + (shipWindowWidth - doneButton.Width) / 2, shipWindowY + shipWindowHeight + padding);
+            ResumeLayout();
         }
 
         private void MainWindow_Load(object sender, EventArgs e) { }
@@ -86,17 +94,17 @@ namespace BattleshipsClient
                     previousType = shipSize;
                 }
 
-                int x = shipWindowX + shipWindowPadding + count * (shipSize * cellSize + shipWindowShipMargin);
-                int y = shipWindowY + shipWindowPadding + shipTypes.IndexOf(shipSize) * (cellSize + shipWindowShipMargin);
+                int x = shipWindowX + padding + count * (shipSize * cellSize + shipWindowShipMargin);
+                int y = shipWindowY + padding + shipTypes.IndexOf(shipSize) * (cellSize + shipWindowShipMargin);
 
-                int width = shipWindowPadding * 2 + (count + 1) * (shipSize * cellSize + shipWindowShipMargin) - shipWindowShipMargin;
+                int width = padding * 2 + (count + 1) * (shipSize * cellSize + shipWindowShipMargin) - shipWindowShipMargin;
                 if (width > shipWindowWidth)
                     shipWindowWidth = width;
 
                 setShips.Add(Tuple.Create(new Battleships.Ship.Properties(shipSize, false, x, y), false));
             }
             
-            shipWindowHeight = shipWindowPadding * 2 + shipTypes.Count * (cellSize + shipWindowShipMargin) - shipWindowShipMargin;
+            shipWindowHeight = padding * 2 + shipTypes.Count * (cellSize + shipWindowShipMargin) - shipWindowShipMargin;
         }
 
         private static Rectangle GetShipRectangle(Battleships.Ship.Properties shipProps)
@@ -162,31 +170,38 @@ namespace BattleshipsClient
 
         private void MainWindow_Paint(object sender, PaintEventArgs e)
         {
-            if (stage != Stage.Placement)
-                return;
-
-            DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
-            DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
-
-            DrawBoardShips(e.Graphics, shipFillBrush, shipOutlinePen, GetNotUsedShips(currentShips), boardX, boardY);
-            DrawFreeShips(e.Graphics, shipFillBrush, shipOutlinePen, GetNotUsedShips(setShips));
-
-            if (dragging)
+            switch (stage)
             {
-                int dragx, dragy;
-                if (snapping)
-                {
-                    dragx = boardX + snapX * cellSize;
-                    dragy = boardY + snapY * cellSize;
-                }
-                else
-                {
-                    var mousePosition = PointToClient(Cursor.Position);
-                    dragx = mousePosition.X - dragOffsetX;
-                    dragy = mousePosition.Y - dragOffsetY;
-                }
+                case Stage.Connection: return;
+                case Stage.Placement:
+                    DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
+                    DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
-                DrawShip(e.Graphics, shipFillBrush, snapping ? shipHighlightPen : shipOutlinePen, new Battleships.Ship.Properties(drag.Size, drag.IsVertical, dragx, dragy));
+                    DrawBoardShips(e.Graphics, shipFillBrush, shipOutlinePen, GetNotUsedShips(currentShips), boardX, boardY);
+                    DrawFreeShips(e.Graphics, shipFillBrush, shipOutlinePen, GetNotUsedShips(setShips));
+
+                    if (!dragging)
+                        return;
+
+                    int dragx, dragy;
+                    if (snapping)
+                    {
+                        dragx = boardX + snapX * cellSize;
+                        dragy = boardY + snapY * cellSize;
+                    }
+                    else
+                    {
+                        var mousePosition = PointToClient(Cursor.Position);
+                        dragx = mousePosition.X - dragOffsetX;
+                        dragy = mousePosition.Y - dragOffsetY;
+                    }
+
+                    DrawShip(e.Graphics, shipFillBrush, snapping ? shipHighlightPen : shipOutlinePen, new Battleships.Ship.Properties(drag.Size, drag.IsVertical, dragx, dragy));
+                    break;
+                case Stage.Playing:
+                    throw new NotImplementedException();
+                default:
+                    throw new Exception();
             }
         }
 
@@ -272,6 +287,8 @@ namespace BattleshipsClient
                 if (snapping)
                 {
                     currentShips.Add(Tuple.Create(new Battleships.Ship.Properties(drag.Size, drag.IsVertical, snapX, snapY), false));
+                    if (currentShips.Count == setShips.Count)
+                        doneButton.Enabled = true;
                 }
                 else if (dragging)
                 {
@@ -356,20 +373,21 @@ namespace BattleshipsClient
         {
             connectButton.Enabled = false;
             nameTextBox.Enabled = false;
-            await Task.Delay(500);
+            await Task.Delay(100); // emulating connection
             ToggleConnectControls(false);
             stage = Stage.Placement;
+            doneButton.Visible = true;
             Invalidate();
         }
 
         private void ToggleConnectControls(bool state)
         {
             SuspendLayout();
-            nameTextBox.Enabled = state;
-            nameTextBox.Visible = state;
-            connectButton.Enabled = state;
-            connectButton.Visible = state;
-            connectionLabel.Enabled = state;
+            nameTextBox.Enabled =
+            nameTextBox.Visible =
+            connectButton.Enabled =
+            connectButton.Visible =
+            connectionLabel.Enabled =
             connectionLabel.Visible = state;
             ResumeLayout();
         }
