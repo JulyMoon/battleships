@@ -261,13 +261,13 @@ namespace BattleshipsClient
             {
                 var ship = setShips[dragIndex].Item1;
                 setShips[dragIndex] = Tuple.Create(ship, true);
-                drag = ship.Clone();
+                drag = ship;
             }
             else
             {
                 var ship = currentShips[dragIndex].Item1;
                 currentShips[dragIndex] = Tuple.Create(ship, true);
-                drag = GetAbsoluteShip(ship).Clone();
+                drag = GetAbsoluteShip(ship);
             }
 
             dragOffsetX = e.X - drag.X;
@@ -286,7 +286,12 @@ namespace BattleshipsClient
             {
                 if (snapping)
                 {
-                    currentShips.Add(Tuple.Create(new Battleships.Ship.Properties(drag.Size, drag.IsVertical, snapX, snapY), false));
+                    var ship = new Battleships.Ship.Properties(drag.Size, drag.IsVertical, snapX, snapY);
+                    if (draggingSetShip)
+                        currentShips.Add(Tuple.Create(ship, false));
+                    else
+                        currentShips[dragIndex] = Tuple.Create(ship, false);
+
                     if (currentShips.Count == setShips.Count)
                         doneButton.Enabled = true;
                 }

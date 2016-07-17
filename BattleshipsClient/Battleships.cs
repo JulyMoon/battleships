@@ -22,8 +22,6 @@ namespace BattleshipsClient
                     Y = y;
                     IsVertical = isVertical;
                 }
-
-                public Properties Clone() => new Properties(Size, IsVertical, X, Y);
             }
 
             public Properties Props;
