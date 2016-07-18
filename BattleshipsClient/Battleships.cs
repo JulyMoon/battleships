@@ -29,11 +29,12 @@ namespace BattleshipsClient
             private readonly bool[] isAlive;
 
             public ReadOnlyCollection<bool> IsAlive => isAlive.ToList().AsReadOnly();
+            public bool Dead => isAlive.All(cell => !cell);
 
             public Ship(Properties shipProps)
             {
                 Props = shipProps;
-                isAlive = new bool[Props.Size];
+                isAlive = Enumerable.Repeat(true, Props.Size).ToArray();
             }
 
             public Ship(int size, bool isVertical, int x, int y) : this(new Properties(size, isVertical, x, y)) { }
