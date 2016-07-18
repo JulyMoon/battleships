@@ -71,6 +71,7 @@
             this.doneButton.Text = "Done";
             this.doneButton.UseVisualStyleBackColor = true;
             this.doneButton.Visible = false;
+            this.doneButton.Click += new System.EventHandler(this.doneButton_Click);
             // 
             // MainWindow
             // 

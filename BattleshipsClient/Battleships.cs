@@ -55,7 +55,7 @@ namespace BattleshipsClient
         public const int BoardWidth = 10;
         public const int BoardHeight = BoardWidth;
 
-        private readonly List<Ship> myShips = new List<Ship>();
+        private List<Ship> myShips;// = new List<Ship>();
 
         public ReadOnlyCollection<Ship> MyShips => myShips.AsReadOnly();
         public static ReadOnlyCollection<int> ShipSet => Array.AsReadOnly(shipSet);
@@ -130,20 +130,12 @@ namespace BattleshipsClient
             return false;
         }
 
-        public void AddShips(List<Ship.Properties> shipPropArray)
+        public void AddShips(IEnumerable<Ship.Properties> shipPropArray)
         {
-            if (!shipPropArray.Select(shipProps => shipProps.Size).OrderBy(size => size).SequenceEqual(shipSet.OrderBy(size => size)))
-                throw new ArgumentException("Incorrect set of ships");
+            myShips = shipPropArray.Select(shipProps => new Ship(shipProps)).ToList();
 
-            foreach (var shipProps in shipPropArray)
-            {
-                //if (!WithinBoard(shipProps))
-                //    throw new ArgumentException("This ship doesn't fit on the board");
-
-                // TODO: add a check for overlapping ships
-
-                myShips.Add(new Ship(shipProps));
-            }
+            //if (!shipPropArray.Select(shipProps => shipProps.Size).OrderBy(size => size).SequenceEqual(shipSet.OrderBy(size => size)))
+            //    throw new ArgumentException("Incorrect set of ships");
         }
     }
 }
