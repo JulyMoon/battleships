@@ -78,7 +78,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(596, 350);
+            this.ClientSize = new System.Drawing.Size(755, 350);
             this.Controls.Add(this.doneButton);
             this.Controls.Add(this.connectionLabel);
             this.Controls.Add(this.connectButton);

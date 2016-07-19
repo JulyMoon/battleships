@@ -13,11 +13,13 @@ namespace BattleshipsClient
     {
         private const int boardWidth = Battleships.BoardWidth;
         private const int boardHeight = Battleships.BoardHeight;
-        private const int boardX = 40;
-        private const int boardY = 40;
+        private const int myBoardX = 40;
+        private const int myBoardY = 40;
+        private const int enemyBoardX = myBoardX + (boardWidth + 3) * cellSize;
+        private const int enemyBoardY = myBoardY;
         private const int cellSize = 25;
-        private const int shipWindowX = boardX + boardWidth * cellSize + padding;
-        private const int shipWindowY = boardY;
+        private const int shipWindowX = myBoardX + boardWidth * cellSize + padding;
+        private const int shipWindowY = myBoardY;
         private const int padding = 20;
         private const int shipWindowShipMargin = 15;
         private const int shipPenWidth = 3;
@@ -62,14 +64,22 @@ namespace BattleshipsClient
         {
             InitializeComponent();
             AdoptShipSet(Battleships.ShipSet);
+            PlaceConnectionControls();
             PlaceDoneButton();
         }
 
         private void PlaceDoneButton()
         {
-            SuspendLayout();
+            //SuspendLayout();
             doneButton.Location = new Point(shipWindowX + (shipWindowWidth - doneButton.Width) / 2, shipWindowY + shipWindowHeight + padding);
-            ResumeLayout();
+            //ResumeLayout();
+        }
+
+        private void PlaceConnectionControls()
+        {
+            int combinedHeight = connectButton.Location.Y + connectButton.Height - nameTextBox.Location.Y;
+            nameTextBox.Location = new Point((ClientSize.Width - nameTextBox.Width) / 2, (ClientSize.Height - combinedHeight) / 2);
+            connectButton.Location = new Point((ClientSize.Width - connectButton.Width) / 2, (ClientSize.Height + combinedHeight) / 2 - connectButton.Height);
         }
 
         private void MainWindow_Load(object sender, EventArgs e) { }
@@ -194,11 +204,11 @@ namespace BattleshipsClient
             }
         }
 
-        private static void DrawBoardShips(Graphics g, Brush fillBrush, Pen outlinePen, IEnumerable<Battleships.Ship> ships, int boardx, int boardy)
+        private static void DrawBoardShips(Graphics g, Brush fillBrush, Pen outlinePen, Pen deadPen, Pen crossPen, IEnumerable<Battleships.Ship> ships, int boardx, int boardy)
         {
             foreach (var ship in ships)
             {
-                DrawBoardShip(g, fillBrush, outlinePen, shipDeadPen, shipDeadCrossPen, ship, boardx, boardy);
+                DrawBoardShip(g, fillBrush, outlinePen, deadPen, crossPen, ship, boardx, boardy);
             }
         }
 
@@ -212,10 +222,12 @@ namespace BattleshipsClient
 
         private void DrawPlacementStage(PaintEventArgs e)
         {
-            DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
+            //e.Graphics.DrawLine(Pens.Black, shipWindowX, 0, shipWindowX, Height);
+
+            DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, myBoardX, myBoardY);
             DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
-            DrawBoardShips(e.Graphics, shipFillBrush, shipAlivePen, GetNotUsedShips(currentShips), boardX, boardY);
+            DrawBoardShips(e.Graphics, shipFillBrush, shipAlivePen, GetNotUsedShips(currentShips), myBoardX, myBoardY);
             DrawAbsoluteShips(e.Graphics, shipFillBrush, shipAlivePen, GetNotUsedShips(setShips));
 
             if (!dragging)
@@ -224,8 +236,8 @@ namespace BattleshipsClient
             int dragx, dragy;
             if (snapping)
             {
-                dragx = boardX + snapX * cellSize;
-                dragy = boardY + snapY * cellSize;
+                dragx = myBoardX + snapX * cellSize;
+                dragy = myBoardY + snapY * cellSize;
             }
             else
             {
@@ -239,8 +251,10 @@ namespace BattleshipsClient
 
         private void DrawPlayingStage(PaintEventArgs e)
         {
-            DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, boardX, boardY);
-            DrawBoardShips(e.Graphics, shipFillBrush, shipAlivePen, game.MyShips, boardX, boardY);
+            DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, myBoardX, myBoardY);
+            DrawBoardShips(e.Graphics, shipFillBrush, shipAlivePen, shipDeadPen, shipDeadCrossPen, game.MyShips, myBoardX, myBoardY);
+
+            DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, enemyBoardX, enemyBoardY);
             // todo
         }
 
@@ -258,7 +272,7 @@ namespace BattleshipsClient
         private static bool IntersectsWithMouse(MouseEventArgs e, Rectangle rect) => rect.IntersectsWith(new Rectangle(e.X, e.Y, 1, 1));
 
         private static Battleships.Ship.Properties GetAbsoluteShip(Battleships.Ship.Properties ship)
-            => new Battleships.Ship.Properties(ship.Size, ship.IsVertical, boardX + ship.X * cellSize, boardY + ship.Y * cellSize);
+            => new Battleships.Ship.Properties(ship.Size, ship.IsVertical, myBoardX + ship.X * cellSize, myBoardY + ship.Y * cellSize);
 
         private bool GetShipBelowMouse(MouseEventArgs e, out int index, out bool isSetShip)
         {
@@ -411,8 +425,8 @@ namespace BattleshipsClient
             }
             */
 
-            snapX = (int)Math.Round((mx - adjustedOffsetX - boardX) / cellSize);
-            snapY = (int)Math.Round((my - adjustedOffsetY - boardY) / cellSize);
+            snapX = (int)Math.Round((mx - adjustedOffsetX - myBoardX) / cellSize);
+            snapY = (int)Math.Round((my - adjustedOffsetY - myBoardY) / cellSize);
 
             var ship = new Battleships.Ship.Properties(shipsize, shipvertical, snapX, snapY);
 
