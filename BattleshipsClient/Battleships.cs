@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace BattleshipsClient
 {
@@ -41,20 +43,11 @@ namespace BattleshipsClient
         }
 
         private static readonly int[] shipSet = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
-        private static readonly int[,] neighborsAndItselfPoints =
-        {
-            {-1, -1},
-            {0, -1},
-            {1, -1},
-            {-1, 0},
-            {0, 0},
-            {1, 0},
-            {-1, 1},
-            {0, 1},
-            {1, 1}
-        };
+        private static readonly int[,] neighborsAndItselfPoints = { {-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {0, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1} };
         public const int BoardWidth = 10;
         public const int BoardHeight = BoardWidth;
+
+        private Client client = new Client();
 
         private List<Ship> myShips;// = new List<Ship>();
 
@@ -64,6 +57,11 @@ namespace BattleshipsClient
         public Battleships()
         {
 
+        }
+
+        public async Task ConnectAsync(IPAddress ip, string name)
+        {
+            await client.ConnectAsync(ip, name);
         }
 
         public static void GetShipDimensions(bool vertical, int size, out int shipW, out int shipH)

@@ -442,7 +442,7 @@ namespace BattleshipsClient
         {
             connectButton.Enabled = false;
             nameTextBox.Enabled = false;
-            await Task.Delay(100); // emulating connection
+            await game.ConnectAsync(IPAddress.Loopback, "foxneZz");
             ToggleConnectControls(false);
             stage = Stage.Placement;
             doneButton.Visible = true;
