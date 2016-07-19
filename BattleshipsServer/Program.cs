@@ -10,7 +10,10 @@ namespace BattleshipsServer
     {
         static void Main(string[] args)
         {
+            new Server().Start();
 
+            while (true)
+                Console.ReadLine();
         }
     }
 }
