@@ -24,7 +24,7 @@ namespace BattleshipsClient
 
             Task.Run(() => Listen());
 
-            Send($"name:{name}");
+            SendName(name);
         }
 
         private void Listen()
@@ -33,6 +33,14 @@ namespace BattleshipsClient
                 Console.WriteLine(reader.ReadString());
         }
 
+        public void SendShips(IEnumerable<Battleships.Ship.Properties> shipPropArray)
+            => Send($"ships:{SerializeShips(shipPropArray)}");
+
+        private static string SerializeShips(IEnumerable<Battleships.Ship.Properties> shipPropArray)
+            => shipPropArray.Aggregate("", (current, ship) => $"{current}|{ship.Serialize()}");
+
         private void Send(string text) => writer.Write(text);
+
+        private void SendName(string name) => Send($"name:{name}");
     }
 }

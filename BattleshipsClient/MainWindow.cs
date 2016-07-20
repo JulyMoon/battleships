@@ -472,13 +472,13 @@ namespace BattleshipsClient
         private void ToggleConnectControls(bool state)
         {
             foreach (var control in connectionControls)
-                control.Enabled = control.Visible = state;
+                control.Visible = state;
         }
 
         private void doneButton_Click(object sender, EventArgs e)
         {
             doneButton.Visible = false;
-            game.AddShips(currentShips.Select(tuple => tuple.Item1));
+            game.AddShips(currentShips.Select(tuple => tuple.Item1).ToList());
             stage = Stage.Playing;
             Invalidate();
         }

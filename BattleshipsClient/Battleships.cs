@@ -24,6 +24,18 @@ namespace BattleshipsClient
                     Y = y;
                     IsVertical = isVertical;
                 }
+
+                public string Serialize() => $"{X}'{Y}'{Size}'{IsVertical}";
+
+                public Properties Deserialize(string data)
+                {
+                    var props = data.Split('\'');
+                    int x = Int32.Parse(props[0]);
+                    int y = Int32.Parse(props[1]);
+                    int size = Int32.Parse(props[2]);
+                    bool isVertical = Boolean.Parse(props[3]);
+                    return new Properties(size, isVertical, x, y);
+                }
             }
 
             public Properties Props;
@@ -129,9 +141,10 @@ namespace BattleshipsClient
             return false;
         }
 
-        public void AddShips(IEnumerable<Ship.Properties> shipPropArray)
+        public void AddShips(List<Ship.Properties> shipPropArray)
         {
             myShips = shipPropArray.Select(shipProps => new Ship(shipProps)).ToList();
+            client.SendShips(shipPropArray);
 
             //if (!shipPropArray.Select(shipProps => shipProps.Size).OrderBy(size => size).SequenceEqual(shipSet.OrderBy(size => size)))
             //    throw new ArgumentException("Incorrect set of ships");
