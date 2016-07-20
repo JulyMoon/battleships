@@ -37,7 +37,7 @@
             // nameTextBox
             // 
             this.nameTextBox.Font = new System.Drawing.Font("Trebuchet MS", 14F);
-            this.nameTextBox.Location = new System.Drawing.Point(242, 144);
+            this.nameTextBox.Location = new System.Drawing.Point(12, 47);
             this.nameTextBox.Name = "nameTextBox";
             this.nameTextBox.Size = new System.Drawing.Size(138, 29);
             this.nameTextBox.TabIndex = 0;
@@ -45,7 +45,7 @@
             // 
             // connectButton
             // 
-            this.connectButton.Location = new System.Drawing.Point(242, 179);
+            this.connectButton.Location = new System.Drawing.Point(12, 82);
             this.connectButton.Name = "connectButton";
             this.connectButton.Size = new System.Drawing.Size(138, 29);
             this.connectButton.TabIndex = 1;
@@ -55,9 +55,9 @@
             // 
             // connectionLabel
             // 
-            this.connectionLabel.Location = new System.Drawing.Point(239, 211);
+            this.connectionLabel.Location = new System.Drawing.Point(12, 114);
             this.connectionLabel.Name = "connectionLabel";
-            this.connectionLabel.Size = new System.Drawing.Size(141, 29);
+            this.connectionLabel.Size = new System.Drawing.Size(138, 29);
             this.connectionLabel.TabIndex = 2;
             this.connectionLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 

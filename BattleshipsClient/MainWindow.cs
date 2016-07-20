@@ -53,6 +53,8 @@ namespace BattleshipsClient
         private int shipWindowWidth;
         private int shipWindowHeight;
 
+        private readonly Control[] connectionControls;
+
         private enum Stage
         {
             Connection, Placement, Playing
@@ -63,23 +65,40 @@ namespace BattleshipsClient
         public MainWindow()
         {
             InitializeComponent();
+
+            connectionControls = new Control[] {nameTextBox, connectButton, connectionLabel};
+
             AdoptShipSet(Battleships.ShipSet);
-            PlaceConnectionControls();
+            CenterConnectionControls();
             PlaceDoneButton();
         }
 
         private void PlaceDoneButton()
         {
-            //SuspendLayout();
             doneButton.Location = new Point(shipWindowX + (shipWindowWidth - doneButton.Width) / 2, shipWindowY + shipWindowHeight + padding);
-            //ResumeLayout();
         }
 
-        private void PlaceConnectionControls()
+        private void CenterConnectionControls()
         {
-            int combinedHeight = connectButton.Location.Y + connectButton.Height - nameTextBox.Location.Y;
-            nameTextBox.Location = new Point((ClientSize.Width - nameTextBox.Width) / 2, (ClientSize.Height - combinedHeight) / 2);
-            connectButton.Location = new Point((ClientSize.Width - connectButton.Width) / 2, (ClientSize.Height + combinedHeight) / 2 - connectButton.Height);
+            int minX = connectionControls.Select(control => control.Location.X).Min();
+            int minY = connectionControls.Select(control => control.Location.Y).Min();
+
+            int maxX = connectionControls.Select(control => control.Location.X + control.Width).Max();
+            int maxY = connectionControls.Select(control => control.Location.Y + control.Height).Max();
+
+            int width = maxX - minX;
+            int height = maxY - minY;
+
+            int ax = (ClientSize.Width - width) / 2;
+            int ay = (ClientSize.Height - height) / 2;
+
+            foreach (var control in connectionControls)
+            {
+                int nx = ax + (control.Location.X - minX);
+                int ny = ay + (control.Location.Y - minY);
+
+                control.Location = new Point(nx, ny);
+            }
         }
 
         private void MainWindow_Load(object sender, EventArgs e) { }
@@ -442,6 +461,7 @@ namespace BattleshipsClient
         {
             connectButton.Enabled = false;
             nameTextBox.Enabled = false;
+            connectionLabel.Text = "Connecting to the server...";
             await game.ConnectAsync(IPAddress.Loopback, "foxneZz");
             ToggleConnectControls(false);
             stage = Stage.Placement;
@@ -451,14 +471,8 @@ namespace BattleshipsClient
 
         private void ToggleConnectControls(bool state)
         {
-            SuspendLayout();
-            nameTextBox.Enabled =
-            nameTextBox.Visible =
-            connectButton.Enabled =
-            connectButton.Visible =
-            connectionLabel.Enabled =
-            connectionLabel.Visible = state;
-            ResumeLayout();
+            foreach (var control in connectionControls)
+                control.Enabled = control.Visible = state;
         }
 
         private void doneButton_Click(object sender, EventArgs e)
