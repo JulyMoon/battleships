@@ -16,6 +16,13 @@ namespace BattleshipsClient
         private BinaryReader reader;
         private const int port = 7070;
 
+        public delegate void MyEventHandler();
+        public event MyEventHandler OpponentFound;
+        //public event MyEventHandler MyTurn;
+
+        private void OnOpponentFound() => OpponentFound?.Invoke();
+        //private void OnMyTurn() => MyTurn?.Invoke();
+
         public async Task ConnectAsync(IPAddress IP, string name)
         {
             await client.ConnectAsync(IP, port);
@@ -30,14 +37,24 @@ namespace BattleshipsClient
         private void Listen()
         {
             while (true)
-                Console.WriteLine(reader.ReadString());
+                ParseTraffic(reader.ReadString());
+        }
+
+        private void ParseTraffic(string traffic)
+        {
+            switch (traffic)
+            {
+                case "opponentFound": OnOpponentFound(); break;
+                default: throw new NotImplementedException();
+                //case "yourTurn": OnMyTurn(); break;
+            }
         }
 
         public void SendShips(IEnumerable<Battleships.Ship.Properties> shipPropArray)
             => Send($"ships:{SerializeShips(shipPropArray)}");
 
         private static string SerializeShips(IEnumerable<Battleships.Ship.Properties> shipPropArray)
-            => shipPropArray.Aggregate("", (current, ship) => $"{current}|{ship.Serialize()}");
+            => shipPropArray.Aggregate("", (current, ship) => $"{current}|{ship.Serialize()}").Substring(1);
 
         private void Send(string text) => writer.Write(text);
 

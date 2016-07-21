@@ -11,6 +11,8 @@ namespace BattleshipsClient
 {
     public partial class MainWindow : Form
     {
+        public const bool DEBUG = false;
+
         private const int boardWidth = Battleships.BoardWidth;
         private const int boardHeight = Battleships.BoardHeight;
         private const int myBoardX = 40;
@@ -71,6 +73,9 @@ namespace BattleshipsClient
             AdoptShipSet(Battleships.ShipSet);
             CenterConnectionControls();
             PlaceDoneButton();
+            PlaceStatusLabel();
+
+            game.OpponentFound += () => statusLabel.Text = "OLOLO OPPONENT FOUND :O";
         }
 
         private void PlaceDoneButton()
@@ -99,6 +104,12 @@ namespace BattleshipsClient
 
                 control.Location = new Point(nx, ny);
             }
+        }
+
+        private void PlaceStatusLabel()
+        {
+            const int myBoardBottomY = myBoardY + boardHeight * cellSize;
+            statusLabel.Location = new Point((ClientSize.Width - statusLabel.Width) / 2, myBoardBottomY + (ClientSize.Height - myBoardBottomY - statusLabel.Height) / 2);
         }
 
         private void MainWindow_Load(object sender, EventArgs e) { }
@@ -462,10 +473,16 @@ namespace BattleshipsClient
             connectButton.Enabled = false;
             nameTextBox.Enabled = false;
             connectionLabel.Text = "Connecting to the server...";
-            await game.ConnectAsync(IPAddress.Loopback, "foxneZz");
+
+            if (!DEBUG)
+            {
+                await game.ConnectAsync(IPAddress.Loopback, "foxneZz");
+            }
+
             ToggleConnectControls(false);
-            stage = Stage.Placement;
+            statusLabel.Visible = true;
             doneButton.Visible = true;
+            stage = Stage.Placement;
             Invalidate();
         }
 
@@ -478,7 +495,9 @@ namespace BattleshipsClient
         private void doneButton_Click(object sender, EventArgs e)
         {
             doneButton.Visible = false;
+            
             game.AddShips(currentShips.Select(tuple => tuple.Item1).ToList());
+            
             stage = Stage.Playing;
             Invalidate();
         }

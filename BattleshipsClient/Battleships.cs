@@ -61,6 +61,9 @@ namespace BattleshipsClient
 
         private Client client = new Client();
 
+        public event Client.MyEventHandler OpponentFound;
+        private void OnOpponentFound() => OpponentFound?.Invoke();
+
         private List<Ship> myShips;// = new List<Ship>();
 
         public ReadOnlyCollection<Ship> MyShips => myShips.AsReadOnly();
@@ -68,7 +71,7 @@ namespace BattleshipsClient
 
         public Battleships()
         {
-
+            client.OpponentFound += OnOpponentFound;
         }
 
         public async Task ConnectAsync(IPAddress ip, string name)
@@ -144,7 +147,11 @@ namespace BattleshipsClient
         public void AddShips(List<Ship.Properties> shipPropArray)
         {
             myShips = shipPropArray.Select(shipProps => new Ship(shipProps)).ToList();
-            client.SendShips(shipPropArray);
+
+            if (!MainWindow.DEBUG)
+            {
+                client.SendShips(shipPropArray);
+            }
 
             //if (!shipPropArray.Select(shipProps => shipProps.Size).OrderBy(size => size).SequenceEqual(shipSet.OrderBy(size => size)))
             //    throw new ArgumentException("Incorrect set of ships");

@@ -32,6 +32,7 @@
             this.connectButton = new System.Windows.Forms.Button();
             this.connectionLabel = new System.Windows.Forms.Label();
             this.doneButton = new System.Windows.Forms.Button();
+            this.statusLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // nameTextBox
@@ -73,12 +74,24 @@
             this.doneButton.Visible = false;
             this.doneButton.Click += new System.EventHandler(this.doneButton_Click);
             // 
+            // statusLabel
+            // 
+            this.statusLabel.Font = new System.Drawing.Font("Verdana", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.statusLabel.Location = new System.Drawing.Point(12, 143);
+            this.statusLabel.Name = "statusLabel";
+            this.statusLabel.Size = new System.Drawing.Size(232, 29);
+            this.statusLabel.TabIndex = 4;
+            this.statusLabel.Text = "Waiting for opponent...";
+            this.statusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.statusLabel.Visible = false;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(755, 350);
+            this.ClientSize = new System.Drawing.Size(669, 350);
+            this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.doneButton);
             this.Controls.Add(this.connectionLabel);
             this.Controls.Add(this.connectButton);
@@ -106,6 +119,7 @@
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.Label connectionLabel;
         private System.Windows.Forms.Button doneButton;
+        private System.Windows.Forms.Label statusLabel;
     }
 }
 
