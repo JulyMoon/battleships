@@ -55,41 +55,37 @@ namespace BattleshipsClient
         private int shipWindowWidth;
         private int shipWindowHeight;
 
-        private readonly Control[] connectionControls;
-
         private enum Stage
         {
-            Connection, Placement, Playing
+            Placement, Playing, Postgame
         }
 
-        private Stage stage = Stage.Connection;
+        private Stage stage = Stage.Placement;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            connectionControls = new Control[] {nameTextBox, connectButton, connectionLabel};
-
             AdoptShipSet(Battleships.ShipSet);
-            CenterConnectionControls();
-            PlaceDoneButton();
+            PlacePlayButton();
             PlaceStatusLabel();
+            PlaceNameTextbox();
 
-            game.OpponentFound += () => statusLabel.Text = "OLOLO OPPONENT FOUND :O";
+            game.OpponentFound += () => statusLabel.Text = "OPPONENT FOUND :O";
         }
 
-        private void PlaceDoneButton()
+        private void PlacePlayButton()
         {
-            doneButton.Location = new Point(shipWindowX + (shipWindowWidth - doneButton.Width) / 2, shipWindowY + shipWindowHeight + padding);
+            playButton.Location = new Point(shipWindowX + (shipWindowWidth - playButton.Width) / 2, shipWindowY + shipWindowHeight + padding);
         }
 
-        private void CenterConnectionControls()
+        private void CenterConnectionControls(Control[] controls)
         {
-            int minX = connectionControls.Select(control => control.Location.X).Min();
-            int minY = connectionControls.Select(control => control.Location.Y).Min();
+            int minX = controls.Select(control => control.Location.X).Min();
+            int minY = controls.Select(control => control.Location.Y).Min();
 
-            int maxX = connectionControls.Select(control => control.Location.X + control.Width).Max();
-            int maxY = connectionControls.Select(control => control.Location.Y + control.Height).Max();
+            int maxX = controls.Select(control => control.Location.X + control.Width).Max();
+            int maxY = controls.Select(control => control.Location.Y + control.Height).Max();
 
             int width = maxX - minX;
             int height = maxY - minY;
@@ -97,7 +93,7 @@ namespace BattleshipsClient
             int ax = (ClientSize.Width - width) / 2;
             int ay = (ClientSize.Height - height) / 2;
 
-            foreach (var control in connectionControls)
+            foreach (var control in controls)
             {
                 int nx = ax + (control.Location.X - minX);
                 int ny = ay + (control.Location.Y - minY);
@@ -110,6 +106,12 @@ namespace BattleshipsClient
         {
             const int myBoardBottomY = myBoardY + boardHeight * cellSize;
             statusLabel.Location = new Point((ClientSize.Width - statusLabel.Width) / 2, myBoardBottomY + (ClientSize.Height - myBoardBottomY - statusLabel.Height) / 2);
+        }
+
+        private void PlaceNameTextbox()
+        {
+            nameTextBox.Location = new Point(shipWindowX + shipWindowWidth + padding, shipWindowY);
+            nameTextBox.Width = ClientSize.Width - nameTextBox.Location.X - padding;
         }
 
         private void MainWindow_Load(object sender, EventArgs e) { }
@@ -292,9 +294,9 @@ namespace BattleshipsClient
         {
             switch (stage)
             {
-                case Stage.Connection: return;
                 case Stage.Placement: DrawPlacementStage(e); break;
                 case Stage.Playing: DrawPlayingStage(e); break;
+                case Stage.Postgame: throw new NotImplementedException();
                 default: throw new Exception();
             }
         }
@@ -387,7 +389,7 @@ namespace BattleshipsClient
                         currentShips[dragIndex] = Tuple.Create(ship, false);
 
                     if (currentShips.Count == setShips.Count)
-                        doneButton.Enabled = true;
+                        playButton.Enabled = true;
                 }
                 else if (dragging)
                 {
@@ -436,24 +438,8 @@ namespace BattleshipsClient
 
         private static void Snap(IEnumerable<Battleships.Ship.Properties> ships, int mx, int my, int offsetX, int offsetY, int shipsize, bool shipvertical, out bool snapping, out int snapX, out int snapY)
         {
-            // concise version
             double adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
             double adjustedOffsetY = (Math.Floor((double)offsetY / cellSize) + 0.5) * cellSize;
-
-            /*
-            // performance friendly version
-            double adjustedOffsetX, adjustedOffsetY;
-            if (shipvertical)
-            {
-                adjustedOffsetX = cellSize / 2d;
-                adjustedOffsetY = (Math.Floor((double)offsetY / cellSize) + 0.5) * cellSize;
-            }
-            else
-            {
-                adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
-                adjustedOffsetY = cellSize / 2d;
-            }
-            */
 
             snapX = (int)Math.Round((mx - adjustedOffsetX - myBoardX) / cellSize);
             snapY = (int)Math.Round((my - adjustedOffsetY - myBoardY) / cellSize);
@@ -463,43 +449,18 @@ namespace BattleshipsClient
             snapping = Battleships.WithinBoard(ship) && !Battleships.Overlaps(ships, ship);
         }
 
-        private async void connectButton_Click(object sender, EventArgs e)
+        private async void playButton_Click(object sender, EventArgs e)
         {
-            await Connect();
-        }
-
-        private async Task Connect()
-        {
-            connectButton.Enabled = false;
+            playButton.Enabled = false;
             nameTextBox.Enabled = false;
-            connectionLabel.Text = "Connecting to the server...";
+            statusLabel.Text = "Connecting to the server...";
 
             if (!DEBUG)
             {
                 await game.ConnectAsync(IPAddress.Loopback, "foxneZz");
             }
 
-            ToggleConnectControls(false);
-            statusLabel.Visible = true;
-            doneButton.Visible = true;
-            stage = Stage.Placement;
-            Invalidate();
-        }
-
-        private void ToggleConnectControls(bool state)
-        {
-            foreach (var control in connectionControls)
-                control.Visible = state;
-        }
-
-        private void doneButton_Click(object sender, EventArgs e)
-        {
-            doneButton.Visible = false;
-            
             game.AddShips(currentShips.Select(tuple => tuple.Item1).ToList());
-            
-            stage = Stage.Playing;
-            Invalidate();
         }
     }
 }

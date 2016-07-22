@@ -16,9 +16,9 @@ namespace BattleshipsClient
         private BinaryReader reader;
         private const int port = 7070;
 
-        public delegate void MyEventHandler();
-        public event MyEventHandler OpponentFound;
-        //public event MyEventHandler MyTurn;
+        public delegate void SimpleEventHandler();
+        public event SimpleEventHandler OpponentFound;
+        //public event SimpleEventHandler MyTurn;
 
         private void OnOpponentFound() => OpponentFound?.Invoke();
         //private void OnMyTurn() => MyTurn?.Invoke();

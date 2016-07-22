@@ -61,7 +61,7 @@ namespace BattleshipsClient
 
         private Client client = new Client();
 
-        public event Client.MyEventHandler OpponentFound;
+        public event Client.SimpleEventHandler OpponentFound;
         private void OnOpponentFound() => OpponentFound?.Invoke();
 
         private List<Ship> myShips;// = new List<Ship>();
