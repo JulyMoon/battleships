@@ -29,6 +29,7 @@ namespace BattleshipsClient
         private static readonly Pen boardLinePen = new Pen(Color.FromArgb(180, 180, 255));
         private static readonly Brush boardTextBrush = Brushes.Black;
         private static readonly Brush shipFillBrush = Brushes.Transparent;
+        private static readonly Pen shipEditablePen = new Pen(Color.DodgerBlue, shipPenWidth);
         private static readonly Pen shipAlivePen = new Pen(Color.FromArgb(0, 90, 156), shipPenWidth);
         private static readonly Pen shipSnapPen = new Pen(Color.ForestGreen, shipPenWidth);
         private static readonly Pen shipDeadPen = new Pen(Color.Red, shipPenWidth);
@@ -57,7 +58,7 @@ namespace BattleshipsClient
 
         private enum Stage
         {
-            Placement, Playing, Postgame
+            Placement, Matchmaking, Playing, Postgame
         }
 
         private Stage stage = Stage.Placement;
@@ -254,13 +255,11 @@ namespace BattleshipsClient
 
         private void DrawPlacementStage(PaintEventArgs e)
         {
-            //e.Graphics.DrawLine(Pens.Black, shipWindowX, 0, shipWindowX, Height);
-
             DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, myBoardX, myBoardY);
             DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
-            DrawBoardShips(e.Graphics, shipFillBrush, shipAlivePen, GetNotUsedShips(currentShips), myBoardX, myBoardY);
-            DrawAbsoluteShips(e.Graphics, shipFillBrush, shipAlivePen, GetNotUsedShips(setShips));
+            DrawBoardShips(e.Graphics, shipFillBrush, shipEditablePen, GetNotUsedShips(currentShips), myBoardX, myBoardY);
+            DrawAbsoluteShips(e.Graphics, shipFillBrush, shipEditablePen, GetNotUsedShips(setShips));
 
             if (!dragging)
                 return;
@@ -278,7 +277,7 @@ namespace BattleshipsClient
                 dragy = mousePosition.Y - dragOffsetY;
             }
 
-            DrawAbsoluteShip(e.Graphics, shipFillBrush, snapping ? shipSnapPen : shipAlivePen, new Battleships.Ship.Properties(drag.Size, drag.IsVertical, dragx, dragy));
+            DrawAbsoluteShip(e.Graphics, shipFillBrush, snapping ? shipSnapPen : shipEditablePen, new Battleships.Ship.Properties(drag.Size, drag.IsVertical, dragx, dragy));
         }
 
         private void DrawPlayingStage(PaintEventArgs e)
@@ -290,11 +289,20 @@ namespace BattleshipsClient
             // todo
         }
 
+        private void DrawMatchmakingStage(PaintEventArgs e)
+        {
+            DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, myBoardX, myBoardY);
+            DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
+
+            DrawBoardShips(e.Graphics, shipFillBrush, shipAlivePen, GetNotUsedShips(currentShips), myBoardX, myBoardY);
+        }
+
         private void MainWindow_Paint(object sender, PaintEventArgs e)
         {
             switch (stage)
             {
                 case Stage.Placement: DrawPlacementStage(e); break;
+                case Stage.Matchmaking: DrawMatchmakingStage(e); break;
                 case Stage.Playing: DrawPlayingStage(e); break;
                 case Stage.Postgame: throw new NotImplementedException();
                 default: throw new Exception();
@@ -460,7 +468,11 @@ namespace BattleshipsClient
                 await game.ConnectAsync(IPAddress.Loopback, "foxneZz");
             }
 
-            game.AddShips(currentShips.Select(tuple => tuple.Item1).ToList());
+            statusLabel.Text = "Waiting for opponent...";
+
+            //game.AddShips(currentShips.Select(tuple => tuple.Item1).ToList());
+            stage = Stage.Matchmaking;
+            Invalidate();
         }
     }
 }
