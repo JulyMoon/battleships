@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -42,6 +43,8 @@ namespace BattleshipsClient
 
         private void ParseTraffic(string traffic)
         {
+            Debug.WriteLine(traffic);
+
             switch (traffic)
             {
                 case "opponentFound": OnOpponentFound(); break;
@@ -50,8 +53,8 @@ namespace BattleshipsClient
             }
         }
 
-        public void SendShips(IEnumerable<Battleships.Ship.Properties> shipPropArray)
-            => Send($"ships:{SerializeShips(shipPropArray)}");
+        public void EnterMatchmaking(IEnumerable<Battleships.Ship.Properties> shipPropArray)
+            => Send($"enter:{SerializeShips(shipPropArray)}");
 
         private static string SerializeShips(IEnumerable<Battleships.Ship.Properties> shipPropArray)
             => shipPropArray.Aggregate("", (current, ship) => $"{current}|{ship.Serialize()}").Substring(1);

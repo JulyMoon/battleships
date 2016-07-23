@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -62,10 +63,18 @@ namespace BattleshipsClient
         private Client client = new Client();
 
         public event Client.SimpleEventHandler OpponentFound;
-        private void OnOpponentFound() => OpponentFound?.Invoke();
 
-        private List<Ship> myShips;// = new List<Ship>();
+        private void OnOpponentFound()
+        {
+            Debug.WriteLine("OnOpponentFound() in Battleships.cs");
+            myShips = myShipProps.Select(shipProps => new Ship(shipProps)).ToList();
+            OpponentFound?.Invoke();
+        } 
 
+        private List<Ship.Properties> myShipProps;
+        private List<Ship> myShips;
+
+        public ReadOnlyCollection<Ship.Properties> MyShipProps => myShipProps.AsReadOnly();
         public ReadOnlyCollection<Ship> MyShips => myShips.AsReadOnly();
         public static ReadOnlyCollection<int> ShipSet => Array.AsReadOnly(shipSet);
 
@@ -73,6 +82,12 @@ namespace BattleshipsClient
         {
             client.OpponentFound += OnOpponentFound;
         }
+
+        public void EnterMatchmaking(List<Ship.Properties> shipPropArray)
+        {
+            myShipProps = shipPropArray;
+            client.EnterMatchmaking(shipPropArray);
+        } 
 
         public async Task ConnectAsync(IPAddress ip, string name)
         {
@@ -144,17 +159,17 @@ namespace BattleshipsClient
             return false;
         }
 
-        public void AddShips(List<Ship.Properties> shipPropArray)
+        /*public void AddShips(List<Ship.Properties> shipPropArray)
         {
             myShips = shipPropArray.Select(shipProps => new Ship(shipProps)).ToList();
 
             if (!MainWindow.DEBUG)
             {
-                client.SendShips(shipPropArray);
+                client.EnterMatchmaking(shipPropArray);
             }
 
             //if (!shipPropArray.Select(shipProps => shipProps.Size).OrderBy(size => size).SequenceEqual(shipSet.OrderBy(size => size)))
             //    throw new ArgumentException("Incorrect set of ships");
-        }
+        }*/
     }
 }

@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BattleshipsClient
@@ -71,7 +70,19 @@ namespace BattleshipsClient
             PlaceStatusLabel();
             PlaceNameTextbox();
 
-            game.OpponentFound += () => statusLabel.Text = "OPPONENT FOUND :O";
+            game.OpponentFound += OnOpponentFound;
+        }
+
+        private void OnOpponentFound()
+        {
+            try
+            {
+                statusLabel.Text = "OPPONENT FOUND";
+            }
+            catch (InvalidOperationException ioe)
+            {
+                
+            }
         }
 
         private void PlacePlayButton()
@@ -292,7 +303,7 @@ namespace BattleshipsClient
             DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, myBoardX, myBoardY);
             DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
-            DrawBoardShips(e.Graphics, shipAlivePen, GetNotUsedShips(currentShips), myBoardX, myBoardY);
+            DrawBoardShips(e.Graphics, shipAlivePen, game.MyShipProps, myBoardX, myBoardY);
         }
 
         private void MainWindow_Paint(object sender, PaintEventArgs e)
@@ -467,8 +478,8 @@ namespace BattleshipsClient
             }
 
             statusLabel.Text = "Waiting for opponent...";
-
-            //game.AddShips(currentShips.Select(tuple => tuple.Item1).ToList());
+            
+            game.EnterMatchmaking(currentShips.Select(tuple => tuple.Item1).ToList());
             stage = Stage.Matchmaking;
             Invalidate();
         }
