@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -66,7 +65,6 @@ namespace BattleshipsClient
 
         private void OnOpponentFound()
         {
-            Debug.WriteLine("OnOpponentFound() in Battleships.cs");
             myShips = myShipProps.Select(shipProps => new Ship(shipProps)).ToList();
             OpponentFound?.Invoke();
         } 

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -43,8 +42,6 @@ namespace BattleshipsClient
 
         private void ParseTraffic(string traffic)
         {
-            Debug.WriteLine(traffic);
-
             switch (traffic)
             {
                 case "opponentFound": OnOpponentFound(); break;

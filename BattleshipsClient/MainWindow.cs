@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Net;
@@ -75,14 +76,15 @@ namespace BattleshipsClient
 
         private void OnOpponentFound()
         {
-            try
-            {
-                statusLabel.Text = "OPPONENT FOUND";
-            }
-            catch (InvalidOperationException ioe)
-            {
-                
-            }
+            RunOnUIThread(() => statusLabel.Text = "Opponent found");
+        }
+
+        private void RunOnUIThread(Action action)
+        {
+            if (InvokeRequired)
+                Invoke(action);
+            else
+                action();
         }
 
         private void PlacePlayButton()
