@@ -162,7 +162,7 @@ namespace BattleshipsClient
         {
             var randomShips = new List<Ship.Properties>();
 
-            foreach (int shipSize in shipSet)
+            foreach (int shipSize in shipSet.OrderByDescending(size => size))
             {
                 Ship.Properties randomShip;
                 do

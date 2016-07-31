@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Net;
@@ -476,6 +475,7 @@ namespace BattleshipsClient
         private async void playButton_Click(object sender, EventArgs e)
         {
             playButton.Enabled = false;
+            randomButton.Enabled = false;
             nameTextBox.Enabled = false;
             statusLabel.Text = "Connecting to the server...";
 
@@ -483,11 +483,12 @@ namespace BattleshipsClient
             {
                 await game.ConnectAsync(IPAddress.Loopback, "foxneZz");
             }
-
-            statusLabel.Text = "Waiting for opponent...";
             
             game.EnterMatchmaking(currentShips.Select(tuple => tuple.Item1).ToList());
             stage = Stage.Matchmaking;
+
+            statusLabel.Text = "Waiting for opponent...";
+
             Invalidate();
         }
 
