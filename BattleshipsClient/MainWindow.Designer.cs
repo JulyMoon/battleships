@@ -31,6 +31,7 @@
             this.nameTextBox = new System.Windows.Forms.TextBox();
             this.playButton = new System.Windows.Forms.Button();
             this.statusLabel = new System.Windows.Forms.Label();
+            this.randomButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // nameTextBox
@@ -46,9 +47,9 @@
             // playButton
             // 
             this.playButton.Enabled = false;
-            this.playButton.Location = new System.Drawing.Point(12, 47);
+            this.playButton.Location = new System.Drawing.Point(106, 47);
             this.playButton.Name = "playButton";
-            this.playButton.Size = new System.Drawing.Size(138, 29);
+            this.playButton.Size = new System.Drawing.Size(88, 29);
             this.playButton.TabIndex = 3;
             this.playButton.Text = "Play";
             this.playButton.UseVisualStyleBackColor = true;
@@ -64,12 +65,23 @@
             this.statusLabel.Text = "Place the ships";
             this.statusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // randomButton
+            // 
+            this.randomButton.Location = new System.Drawing.Point(12, 47);
+            this.randomButton.Name = "randomButton";
+            this.randomButton.Size = new System.Drawing.Size(88, 29);
+            this.randomButton.TabIndex = 5;
+            this.randomButton.Text = "Randomize";
+            this.randomButton.UseVisualStyleBackColor = true;
+            this.randomButton.Click += new System.EventHandler(this.randomButton_Click);
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(669, 350);
+            this.Controls.Add(this.randomButton);
             this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.playButton);
             this.Controls.Add(this.nameTextBox);
@@ -95,6 +107,7 @@
         private System.Windows.Forms.TextBox nameTextBox;
         private System.Windows.Forms.Button playButton;
         private System.Windows.Forms.Label statusLabel;
+        private System.Windows.Forms.Button randomButton;
     }
 }
 

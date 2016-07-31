@@ -55,6 +55,8 @@ namespace BattleshipsClient
         private int shipWindowWidth;
         private int shipWindowHeight;
 
+        private Control[] controlGroup;
+
         private enum Stage
         {
             Placement, Matchmaking, Playing, Postgame
@@ -67,9 +69,12 @@ namespace BattleshipsClient
             InitializeComponent();
 
             AdoptShipSet(Battleships.ShipSet);
-            PlacePlayButton();
+            //PlacePlayButton();
             PlaceStatusLabel();
             PlaceNameTextbox();
+
+            controlGroup = new Control[] {randomButton, playButton};
+            CenterConnectionControls(controlGroup, new Rectangle(shipWindowX, shipWindowY + shipWindowHeight, shipWindowWidth, boardHeight * cellSize - shipWindowHeight));
 
             game.OpponentFound += OnOpponentFound;
         }
@@ -92,7 +97,7 @@ namespace BattleshipsClient
             playButton.Location = new Point(shipWindowX + (shipWindowWidth - playButton.Width) / 2, shipWindowY + shipWindowHeight + padding);
         }
 
-        private void CenterConnectionControls(Control[] controls)
+        private static void CenterConnectionControls(Control[] controls, Rectangle rect)
         {
             int minX = controls.Select(control => control.Location.X).Min();
             int minY = controls.Select(control => control.Location.Y).Min();
@@ -103,8 +108,8 @@ namespace BattleshipsClient
             int width = maxX - minX;
             int height = maxY - minY;
 
-            int ax = (ClientSize.Width - width) / 2;
-            int ay = (ClientSize.Height - height) / 2;
+            int ax = rect.X + (rect.Width - width) / 2;
+            int ay = rect.Y + (rect.Height - height) / 2;
 
             foreach (var control in controls)
             {
@@ -483,6 +488,21 @@ namespace BattleshipsClient
             
             game.EnterMatchmaking(currentShips.Select(tuple => tuple.Item1).ToList());
             stage = Stage.Matchmaking;
+            Invalidate();
+        }
+
+        private void randomButton_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < setShips.Count; i++)
+                setShips[i] = Tuple.Create(setShips[i].Item1, true);
+
+            var randomShips = Battleships.GetRandomShips();
+            currentShips.Clear();
+            foreach (var ship in randomShips)
+                currentShips.Add(Tuple.Create(ship, false));
+
+            playButton.Enabled = true;
+
             Invalidate();
         }
     }

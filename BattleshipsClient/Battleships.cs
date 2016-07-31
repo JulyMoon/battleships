@@ -54,6 +54,7 @@ namespace BattleshipsClient
             public Ship(int size, bool isVertical, int x, int y) : this(new Properties(size, isVertical, x, y)) { }
         }
 
+        private static readonly Random random = new Random();
         private static readonly int[] shipSet = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
         private static readonly int[,] neighborsAndItselfPoints = { {-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {0, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1} };
         public const int BoardWidth = 10;
@@ -155,6 +156,38 @@ namespace BattleshipsClient
             }
 
             return false;
+        }
+
+        public static List<Ship.Properties> GetRandomShips()
+        {
+            var randomShips = new List<Ship.Properties>();
+
+            foreach (int shipSize in shipSet)
+            {
+                Ship.Properties randomShip;
+                do
+                {
+                    bool vertical = random.Next(2) == 0;
+
+                    int x, y;
+                    if (vertical)
+                    {
+                        x = random.Next(BoardWidth);
+                        y = random.Next(BoardHeight - (shipSize - 1));
+                    }
+                    else
+                    {
+                        x = random.Next(BoardWidth - (shipSize - 1));
+                        y = random.Next(BoardHeight);
+                    }
+
+                    randomShip = new Ship.Properties(shipSize, vertical, x, y);
+                } while (Overlaps(randomShips, randomShip));
+                
+                randomShips.Add(randomShip);
+            }
+
+            return randomShips;
         }
 
         /*public void AddShips(List<Ship.Properties> shipPropArray)
