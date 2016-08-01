@@ -54,7 +54,7 @@ namespace BattleshipsClient
         private int shipWindowWidth;
         private int shipWindowHeight;
 
-        private Control[] controlGroup;
+        private readonly Control[] controlGroup;
 
         private enum Stage
         {
@@ -68,19 +68,27 @@ namespace BattleshipsClient
             InitializeComponent();
 
             AdoptShipSet(Battleships.ShipSet);
-            //PlacePlayButton();
             PlaceStatusLabel();
             PlaceNameTextbox();
 
             controlGroup = new Control[] {randomButton, playButton};
-            CenterConnectionControls(controlGroup, new Rectangle(shipWindowX, shipWindowY + shipWindowHeight, shipWindowWidth, boardHeight * cellSize - shipWindowHeight));
+            CenterConnectionControls(new Rectangle(shipWindowX, shipWindowY + shipWindowHeight, shipWindowWidth, boardHeight * cellSize - shipWindowHeight), controlGroup);
 
             game.OpponentFound += OnOpponentFound;
         }
 
         private void OnOpponentFound()
         {
-            RunOnUIThread(() => statusLabel.Text = "Opponent found");
+            RunOnUIThread(() =>
+            {
+                statusLabel.Text = "Opponent found";
+                stage = Stage.Playing;
+
+                foreach (var control in controlGroup)
+                    control.Visible = false;
+
+                Invalidate();
+            });
         }
 
         private void RunOnUIThread(Action action)
@@ -91,12 +99,7 @@ namespace BattleshipsClient
                 action();
         }
 
-        private void PlacePlayButton()
-        {
-            playButton.Location = new Point(shipWindowX + (shipWindowWidth - playButton.Width) / 2, shipWindowY + shipWindowHeight + padding);
-        }
-
-        private static void CenterConnectionControls(Control[] controls, Rectangle rect)
+        private static void CenterConnectionControls(Rectangle rect, params Control[] controls)
         {
             int minX = controls.Select(control => control.Location.X).Min();
             int minY = controls.Select(control => control.Location.Y).Min();
@@ -301,7 +304,6 @@ namespace BattleshipsClient
             DrawBoardShips(e.Graphics, shipAlivePen, shipDeadPen, shipDeadCrossPen, game.MyShips, myBoardX, myBoardY);
 
             DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, enemyBoardX, enemyBoardY);
-            // todo
         }
 
         private void DrawMatchmakingStage(PaintEventArgs e)
