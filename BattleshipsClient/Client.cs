@@ -49,10 +49,10 @@ namespace BattleshipsClient
             }
         }
 
-        public void EnterMatchmaking(IEnumerable<Battleships.Ship.Properties> shipPropArray)
+        public void EnterMatchmaking(IEnumerable<ShipProperties> shipPropArray)
             => Send($"enter:{SerializeShips(shipPropArray)}");
 
-        private static string SerializeShips(IEnumerable<Battleships.Ship.Properties> shipPropArray)
+        private static string SerializeShips(IEnumerable<ShipProperties> shipPropArray)
             => shipPropArray.Aggregate("", (current, ship) => $"{current}|{ship.Serialize()}").Substring(1);
 
         private void Send(string text) => writer.Write(text);

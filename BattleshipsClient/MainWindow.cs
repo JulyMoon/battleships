@@ -36,8 +36,8 @@ namespace BattleshipsClient
         private static readonly Font boardFont = new Font("Consolas", 10);
 
         private readonly Battleships game = new Battleships();
-        private readonly List<Tuple<Battleships.Ship.Properties, bool>> currentShips = new List<Tuple<Battleships.Ship.Properties, bool>>();
-        private readonly List<Tuple<Battleships.Ship.Properties, bool>> setShips = new List<Tuple<Battleships.Ship.Properties, bool>>();
+        private readonly List<Tuple<ShipProperties, bool>> currentShips = new List<Tuple<ShipProperties, bool>>();
+        private readonly List<Tuple<ShipProperties, bool>> setShips = new List<Tuple<ShipProperties, bool>>();
                                                                // ^ this bool represents whether the ship was used or not
 
         private bool draggingSetShip;
@@ -45,7 +45,7 @@ namespace BattleshipsClient
         private bool dragging;
         private int dragOffsetX;
         private int dragOffsetY;
-        private Battleships.Ship.Properties drag;
+        private ShipProperties drag;
 
         private bool snapping;
         private int snapX;
@@ -165,13 +165,13 @@ namespace BattleshipsClient
                 if (width > shipWindowWidth)
                     shipWindowWidth = width;
 
-                setShips.Add(Tuple.Create(new Battleships.Ship.Properties(shipSize, false, x, y), false));
+                setShips.Add(Tuple.Create(new ShipProperties(shipSize, false, x, y), false));
             }
             
             shipWindowHeight = padding * 2 + shipTypes.Count * (cellSize + shipWindowShipMargin) - shipWindowShipMargin;
         }
 
-        private static Rectangle GetShipRectangle(Battleships.Ship.Properties shipProps)
+        private static Rectangle GetShipRectangle(ShipProperties shipProps)
         {
             int shipWidth, shipHeight;
             Battleships.GetShipDimensions(shipProps.IsVertical, shipProps.Size, out shipWidth, out shipHeight);
@@ -181,36 +181,36 @@ namespace BattleshipsClient
             return new Rectangle(shipProps.X, shipProps.Y, shipWidth, shipHeight);
         }
 
-        private static void DrawAbsoluteShip(Graphics g, Pen outlinePen, Battleships.Ship.Properties shipProps)
+        private static void DrawAbsoluteShip(Graphics g, Pen outlinePen, ShipProperties shipProps)
         {
             var shipRect = GetShipRectangle(shipProps);
             g.DrawRectangle(outlinePen, shipRect);
         }
 
-        private static void DrawBoardShip(Graphics g, Pen outlinePen, Battleships.Ship.Properties ship, int boardx, int boardy)
+        private static void DrawBoardShip(Graphics g, Pen outlinePen, ShipProperties ship, int boardx, int boardy)
         {
-            DrawAbsoluteShip(g, outlinePen, new Battleships.Ship.Properties(ship.Size, ship.IsVertical, boardx + ship.X * cellSize, boardy + ship.Y * cellSize));
+            DrawAbsoluteShip(g, outlinePen, new ShipProperties(ship.Size, ship.IsVertical, boardx + ship.X * cellSize, boardy + ship.Y * cellSize));
         }
 
-        private static void DrawBoardShip(Graphics g, Pen outlinePen, Pen deadPen, Pen crossPen, Battleships.Ship ship, int boardx, int boardy)
+        private static void DrawBoardShip(Graphics g, Pen outlinePen, Pen deadPen, Pen crossPen, Ship ship, int boardx, int boardy)
         {
-            DrawAbsoluteShip(g, ship.Dead ? deadPen : outlinePen, new Battleships.Ship.Properties(ship.Props.Size, ship.Props.IsVertical, boardx + ship.Props.X * cellSize, boardy + ship.Props.Y * cellSize));
+            DrawAbsoluteShip(g, ship.Dead ? deadPen : outlinePen, new ShipProperties(ship.Size, ship.IsVertical, boardx + ship.X * cellSize, boardy + ship.Y * cellSize));
 
-            for (int i = 0; i < ship.Props.Size; i++)
+            for (int i = 0; i < ship.Size; i++)
             {
                 if (ship.IsAlive[i])
                     continue;
 
                 int x, y;
-                if (ship.Props.IsVertical)
+                if (ship.IsVertical)
                 {
-                    x = ship.Props.X;
-                    y = ship.Props.Y + i;
+                    x = ship.X;
+                    y = ship.Y + i;
                 }
                 else
                 {
-                    x = ship.Props.X + i;
-                    y = ship.Props.Y;
+                    x = ship.X + i;
+                    y = ship.Y;
                 }
 
                 x = boardx + x * cellSize;
@@ -247,7 +247,7 @@ namespace BattleshipsClient
 
         private static void DrawShipWindow(Graphics g, Pen pen, int x, int y, int width, int height) => g.DrawRectangle(pen, x, y, width, height);
 
-        private static void DrawBoardShips(Graphics g, Pen outlinePen, IEnumerable<Battleships.Ship.Properties> ships, int boardx, int boardy)
+        private static void DrawBoardShips(Graphics g, Pen outlinePen, IEnumerable<ShipProperties> ships, int boardx, int boardy)
         {
             foreach (var ship in ships)
             {
@@ -255,7 +255,7 @@ namespace BattleshipsClient
             }
         }
 
-        private static void DrawBoardShips(Graphics g, Pen outlinePen, Pen deadPen, Pen crossPen, IEnumerable<Battleships.Ship> ships, int boardx, int boardy)
+        private static void DrawBoardShips(Graphics g, Pen outlinePen, Pen deadPen, Pen crossPen, IEnumerable<Ship> ships, int boardx, int boardy)
         {
             foreach (var ship in ships)
             {
@@ -263,7 +263,7 @@ namespace BattleshipsClient
             }
         }
 
-        private static void DrawAbsoluteShips(Graphics g, Pen outlinePen, IEnumerable<Battleships.Ship.Properties> ships)
+        private static void DrawAbsoluteShips(Graphics g, Pen outlinePen, IEnumerable<ShipProperties> ships)
         {
             foreach (var ship in ships)
             {
@@ -295,7 +295,7 @@ namespace BattleshipsClient
                 dragy = mousePosition.Y - dragOffsetY;
             }
 
-            DrawAbsoluteShip(e.Graphics, snapping ? shipSnapPen : shipEditablePen, new Battleships.Ship.Properties(drag.Size, drag.IsVertical, dragx, dragy));
+            DrawAbsoluteShip(e.Graphics, snapping ? shipSnapPen : shipEditablePen, new ShipProperties(drag.Size, drag.IsVertical, dragx, dragy));
         }
 
         private void DrawPlayingStage(PaintEventArgs e)
@@ -328,8 +328,8 @@ namespace BattleshipsClient
 
         private static bool IntersectsWithMouse(MouseEventArgs e, Rectangle rect) => rect.IntersectsWith(new Rectangle(e.X, e.Y, 1, 1));
 
-        private static Battleships.Ship.Properties GetAbsoluteShip(Battleships.Ship.Properties ship)
-            => new Battleships.Ship.Properties(ship.Size, ship.IsVertical, myBoardX + ship.X * cellSize, myBoardY + ship.Y * cellSize);
+        private static ShipProperties GetAbsoluteShip(ShipProperties ship)
+            => new ShipProperties(ship.Size, ship.IsVertical, myBoardX + ship.X * cellSize, myBoardY + ship.Y * cellSize);
 
         private bool GetShipBelowMouse(MouseEventArgs e, out int index, out bool isSetShip)
         {
@@ -407,7 +407,7 @@ namespace BattleshipsClient
             {
                 if (snapping)
                 {
-                    var ship = new Battleships.Ship.Properties(drag.Size, drag.IsVertical, snapX, snapY);
+                    var ship = new ShipProperties(drag.Size, drag.IsVertical, snapX, snapY);
                     if (draggingSetShip)
                         currentShips.Add(Tuple.Create(ship, false));
                     else
@@ -431,7 +431,7 @@ namespace BattleshipsClient
             }
             else if (e.Button == MouseButtons.Right && dragging && drag.Size != 1)
             {
-                drag = new Battleships.Ship.Properties(drag.Size, !drag.IsVertical, drag.X, drag.Y);
+                drag = new ShipProperties(drag.Size, !drag.IsVertical, drag.X, drag.Y);
 
                 int tmp = dragOffsetX;
                 dragOffsetX = dragOffsetY;
@@ -452,7 +452,7 @@ namespace BattleshipsClient
             }
         }
 
-        private static IEnumerable<Battleships.Ship.Properties> GetNotUsedShips(List<Tuple<Battleships.Ship.Properties, bool>> ships)
+        private static IEnumerable<ShipProperties> GetNotUsedShips(List<Tuple<ShipProperties, bool>> ships)
             => ships.Where(tuple => !tuple.Item2).Select(tuple => tuple.Item1);
 
         private void SnapInvalidate(MouseEventArgs e)
@@ -461,7 +461,7 @@ namespace BattleshipsClient
             Invalidate();
         }
 
-        private static void Snap(IEnumerable<Battleships.Ship.Properties> ships, int mx, int my, int offsetX, int offsetY, int shipsize, bool shipvertical, out bool snapping, out int snapX, out int snapY)
+        private static void Snap(IEnumerable<ShipProperties> ships, int mx, int my, int offsetX, int offsetY, int shipsize, bool shipvertical, out bool snapping, out int snapX, out int snapY)
         {
             double adjustedOffsetX = (Math.Floor((double)offsetX / cellSize) + 0.5) * cellSize;
             double adjustedOffsetY = (Math.Floor((double)offsetY / cellSize) + 0.5) * cellSize;
@@ -469,7 +469,7 @@ namespace BattleshipsClient
             snapX = (int)Math.Round((mx - adjustedOffsetX - myBoardX) / cellSize);
             snapY = (int)Math.Round((my - adjustedOffsetY - myBoardY) / cellSize);
 
-            var ship = new Battleships.Ship.Properties(shipsize, shipvertical, snapX, snapY);
+            var ship = new ShipProperties(shipsize, shipvertical, snapX, snapY);
 
             snapping = Battleships.WithinBoard(ship) && !Battleships.Overlaps(ships, ship);
         }
