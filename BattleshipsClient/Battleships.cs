@@ -19,10 +19,10 @@ namespace BattleshipsClient
 
         public event Client.SimpleEventHandler OpponentFound;
 
-        private void OnOpponentFound()
+        private void OnOpponentFound(bool myTurn)
         {
             myShips = myShipProps.Select(shipProps => new Ship(shipProps)).ToList();
-            OpponentFound?.Invoke();
+            OpponentFound?.Invoke(myTurn);
         } 
 
         private List<ShipProperties> myShipProps;

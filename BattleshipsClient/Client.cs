@@ -15,11 +15,10 @@ namespace BattleshipsClient
         private BinaryReader reader;
         private const int port = 7070;
 
-        public delegate void SimpleEventHandler();
+        public delegate void SimpleEventHandler(bool myTurn);
         public event SimpleEventHandler OpponentFound;
-        //public event SimpleEventHandler MyTurn;
 
-        private void OnOpponentFound() => OpponentFound?.Invoke();
+        private void OnOpponentFound(bool myTurn) => OpponentFound?.Invoke(myTurn);
         //private void OnMyTurn() => MyTurn?.Invoke();
 
         public async Task ConnectAsync(IPAddress IP, string name)
@@ -43,9 +42,9 @@ namespace BattleshipsClient
         {
             switch (traffic)
             {
-                case "opponentFound": OnOpponentFound(); break;
+                case "yourTurn": OnOpponentFound(true); break;
+                case "opponentsTurn": OnOpponentFound(false); break;
                 default: throw new NotImplementedException();
-                //case "yourTurn": OnMyTurn(); break;
             }
         }
 

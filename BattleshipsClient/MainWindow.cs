@@ -24,6 +24,9 @@ namespace BattleshipsClient
         private const int padding = 20;
         private const int shipWindowShipMargin = 15;
         private const int shipPenWidth = 3;
+
+        private const string myTurnString = "Your turn";
+        private const string opponentsTurnString = "Opponent's turn";
         
         private static readonly Pen boardLinePen = new Pen(Color.FromArgb(180, 180, 255));
         private static readonly Brush boardTextBrush = Brushes.Black;
@@ -38,7 +41,7 @@ namespace BattleshipsClient
         private readonly Battleships game = new Battleships();
         private readonly List<Tuple<ShipProperties, bool>> currentShips = new List<Tuple<ShipProperties, bool>>();
         private readonly List<Tuple<ShipProperties, bool>> setShips = new List<Tuple<ShipProperties, bool>>();
-                                                               // ^ this bool represents whether the ship was used or not
+                                                  // ^ this bool represents whether the ship was used or not
 
         private bool draggingSetShip;
         private int dragIndex;
@@ -68,20 +71,19 @@ namespace BattleshipsClient
             InitializeComponent();
 
             AdoptShipSet(Battleships.ShipSet);
-            PlaceStatusLabel();
-            PlaceNameTextbox();
 
             controlGroup = new Control[] {randomButton, playButton};
-            CenterConnectionControls(new Rectangle(shipWindowX, shipWindowY + shipWindowHeight, shipWindowWidth, boardHeight * cellSize - shipWindowHeight), controlGroup);
+            CenterControls(new Rectangle(shipWindowX, shipWindowY + shipWindowHeight, shipWindowWidth, boardHeight * cellSize - shipWindowHeight), controlGroup);
+            CenterControls(new Rectangle(0, myBoardY + boardHeight * cellSize, ClientSize.Width, ClientSize.Height - (myBoardY + boardHeight * cellSize)), statusLabel);
 
             game.OpponentFound += OnOpponentFound;
         }
 
-        private void OnOpponentFound()
+        private void OnOpponentFound(bool myTurn)
         {
             RunOnUIThread(() =>
             {
-                statusLabel.Text = "Opponent found";
+                statusLabel.Text = myTurn ? myTurnString : opponentsTurnString;
                 stage = Stage.Playing;
 
                 foreach (var control in controlGroup)
@@ -99,7 +101,7 @@ namespace BattleshipsClient
                 action();
         }
 
-        private static void CenterConnectionControls(Rectangle rect, params Control[] controls)
+        private static void CenterControls(Rectangle rect, params Control[] controls)
         {
             int minX = controls.Select(control => control.Location.X).Min();
             int minY = controls.Select(control => control.Location.Y).Min();
@@ -120,18 +122,6 @@ namespace BattleshipsClient
 
                 control.Location = new Point(nx, ny);
             }
-        }
-
-        private void PlaceStatusLabel()
-        {
-            const int myBoardBottomY = myBoardY + boardHeight * cellSize;
-            statusLabel.Location = new Point((ClientSize.Width - statusLabel.Width) / 2, myBoardBottomY + (ClientSize.Height - myBoardBottomY - statusLabel.Height) / 2);
-        }
-
-        private void PlaceNameTextbox()
-        {
-            nameTextBox.Location = new Point(shipWindowX + shipWindowWidth + padding, shipWindowY);
-            nameTextBox.Width = ClientSize.Width - nameTextBox.Location.X - padding;
         }
 
         private void MainWindow_Load(object sender, EventArgs e) { }
