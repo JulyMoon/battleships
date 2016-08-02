@@ -19,7 +19,6 @@ namespace BattleshipsClient
         public event SimpleEventHandler OpponentFound;
 
         private void OnOpponentFound(bool myTurn) => OpponentFound?.Invoke(myTurn);
-        //private void OnMyTurn() => MyTurn?.Invoke();
 
         public async Task ConnectAsync(IPAddress IP, string name)
         {
@@ -48,8 +47,9 @@ namespace BattleshipsClient
             }
         }
 
-        public void EnterMatchmaking(IEnumerable<ShipProperties> shipPropArray)
-            => Send($"enter:{SerializeShips(shipPropArray)}");
+        public void Shoot(int x, int y) => Send($"shoot:{x}'{y}");
+
+        public void EnterMatchmaking(IEnumerable<ShipProperties> shipPropArray) => Send($"enter:{SerializeShips(shipPropArray)}");
 
         private static string SerializeShips(IEnumerable<ShipProperties> shipPropArray)
             => shipPropArray.Aggregate("", (current, ship) => $"{current}|{ship.Serialize()}").Substring(1);

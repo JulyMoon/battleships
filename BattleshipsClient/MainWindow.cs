@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Net;
@@ -43,6 +44,8 @@ namespace BattleshipsClient
         private readonly List<Tuple<ShipProperties, bool>> setShips = new List<Tuple<ShipProperties, bool>>();
                                                   // ^ this bool represents whether the ship was used or not
 
+        private bool myTurn;
+
         private bool draggingSetShip;
         private int dragIndex;
         private bool dragging;
@@ -79,10 +82,11 @@ namespace BattleshipsClient
             game.OpponentFound += OnOpponentFound;
         }
 
-        private void OnOpponentFound(bool myTurn)
+        private void OnOpponentFound(bool myTurn_)
         {
             RunOnUIThread(() =>
             {
+                myTurn = myTurn_;
                 statusLabel.Text = myTurn ? myTurnString : opponentsTurnString;
                 stage = Stage.Playing;
 
@@ -359,33 +363,50 @@ namespace BattleshipsClient
 
         private void MainWindow_MouseDown(object sender, MouseEventArgs e)
         {
-            if (stage != Stage.Placement)
-                return;
-
             if (e.Button != MouseButtons.Left)
                 return;
-            
-            if (!GetShipBelowMouse(e, out dragIndex, out draggingSetShip))
-                return;
 
-            if (draggingSetShip)
+            switch (stage)
             {
-                var ship = setShips[dragIndex].Item1;
-                setShips[dragIndex] = Tuple.Create(ship, true);
-                drag = ship;
-            }
-            else
-            {
-                var ship = currentShips[dragIndex].Item1;
-                currentShips[dragIndex] = Tuple.Create(ship, true);
-                drag = GetAbsoluteShip(ship);
-            }
+                case Stage.Placement:
+                    if (!GetShipBelowMouse(e, out dragIndex, out draggingSetShip))
+                        return;
 
-            dragOffsetX = e.X - drag.X;
-            dragOffsetY = e.Y - drag.Y;
-            dragging = true;
+                    if (draggingSetShip)
+                    {
+                        var ship = setShips[dragIndex].Item1;
+                        setShips[dragIndex] = Tuple.Create(ship, true);
+                        drag = ship;
+                    }
+                    else
+                    {
+                        var ship = currentShips[dragIndex].Item1;
+                        currentShips[dragIndex] = Tuple.Create(ship, true);
+                        drag = GetAbsoluteShip(ship);
+                    }
 
-            SnapInvalidate(e);
+                    dragOffsetX = e.X - drag.X;
+                    dragOffsetY = e.Y - drag.Y;
+                    dragging = true;
+
+                    SnapInvalidate(e);
+                    break;
+
+                case Stage.Playing:
+                    int x = e.X - enemyBoardX;
+                    int y = e.Y - enemyBoardY;
+
+                    int xx = (e.X - enemyBoardX) / cellSize;
+                    int yy = (e.Y - enemyBoardY) / cellSize;
+
+                    //Debug.WriteLine($"x: {xx}, y: {yy} [{(Battleships.WithinBoard(xx, yy) && x >= 0 && y >= 0 ? "YES" : "NO")}]");
+
+                    if (!Battleships.WithinBoard(xx, yy) || x < 0 || y < 0)
+                        return;
+
+                    game.Shoot(xx, yy);
+                    break;
+            }
         }
 
         private void MainWindow_MouseUp(object sender, MouseEventArgs e)

@@ -41,7 +41,9 @@ namespace BattleshipsClient
         {
             myShipProps = shipPropArray;
             client.EnterMatchmaking(shipPropArray);
-        } 
+        }
+
+        public void Shoot(int x, int y) => client.Shoot(x, y);
 
         public async Task ConnectAsync(IPAddress ip, string name)
         {
