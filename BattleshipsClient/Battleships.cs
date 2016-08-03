@@ -17,13 +17,36 @@ namespace BattleshipsClient
 
         private Client client = new Client();
 
-        public event Client.SimpleEventHandler OpponentFound;
+        public event Client.TurnEventHandler OpponentFound;
+        public event Client.OpponentShotEventHandler OpponentShot;
+        public event Client.MyShotEventHandler MyShotReceived;
 
         private void OnOpponentFound(bool myTurn)
         {
             myShips = myShipProps.Select(shipProps => new Ship(shipProps)).ToList();
             OpponentFound?.Invoke(myTurn);
-        } 
+        }
+
+        private void OnOpponentShot(bool hit_, int x, int y)
+        {
+            int index, segment;
+            bool hit = GetShotShipSegment(myShips, x, y, out index, out segment);
+            if (hit)
+            {
+                myShips[index].IsAlive[segment] = false;
+            }
+            else
+            {
+                // todo
+            }
+
+            OpponentShot?.Invoke(hit, x, y);
+        }
+
+        private void OnMyShotReceived(bool hit)
+        {
+            MyShotReceived?.Invoke(hit);
+        }
 
         private List<ShipProperties> myShipProps;
         private List<Ship> myShips;
@@ -35,6 +58,8 @@ namespace BattleshipsClient
         public Battleships()
         {
             client.OpponentFound += OnOpponentFound;
+            client.OpponentShot += OnOpponentShot;
+            client.MyShotReceived += OnMyShotReceived;
         }
 
         public void EnterMatchmaking(List<ShipProperties> shipPropArray)
@@ -45,10 +70,7 @@ namespace BattleshipsClient
 
         public void Shoot(int x, int y) => client.Shoot(x, y);
 
-        public async Task ConnectAsync(IPAddress ip, string name)
-        {
-            await client.ConnectAsync(ip, name);
-        }
+        public async Task ConnectAsync(IPAddress ip, string name) => await client.ConnectAsync(ip, name);
 
         public static void GetShipDimensions(bool vertical, int size, out int shipW, out int shipH)
         {
@@ -145,6 +167,36 @@ namespace BattleshipsClient
             }
 
             return randomShips;
+        }
+
+        public static bool GetShotShipSegment(List<Ship> ships, int x, int y, out int index, out int segment)
+        {
+            for (int i = 0; i < ships.Count; i++)
+                for (int j = 0; j < ships[i].Size; j++)
+                {
+                    int xx, yy;
+                    if (ships[i].IsVertical)
+                    {
+                        xx = ships[i].X;
+                        yy = ships[i].Y + j;
+                    }
+                    else
+                    {
+                        xx = ships[i].X + j;
+                        yy = ships[i].Y;
+                    }
+
+                    if (x != xx || y != yy)
+                        continue;
+
+                    index = i;
+                    segment = j;
+                    return true;
+                }
+
+            index = -1;
+            segment = -1;
+            return false;
         }
 
         /*public void AddShips(List<Ship.Properties> shipPropArray)

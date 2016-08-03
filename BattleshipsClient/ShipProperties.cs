@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BattleshipsClient
 {
@@ -27,5 +29,7 @@ namespace BattleshipsClient
             bool isVertical = Boolean.Parse(props[3]);
             return new ShipProperties(size, isVertical, x, y);
         }
+
+        public static List<ShipProperties> DeserializeList(string data) => data.Split('|').Select(Deserialize).ToList();
     }
 }

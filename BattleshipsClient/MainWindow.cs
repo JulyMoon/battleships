@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Net;
@@ -80,6 +79,8 @@ namespace BattleshipsClient
             CenterControls(new Rectangle(0, myBoardY + boardHeight * cellSize, ClientSize.Width, ClientSize.Height - (myBoardY + boardHeight * cellSize)), statusLabel);
 
             game.OpponentFound += OnOpponentFound;
+            game.OpponentShot += OnOpponentShot;
+            game.MyShotReceived += OnMyShotReceived;
         }
 
         private void OnOpponentFound(bool myTurn_)
@@ -95,6 +96,16 @@ namespace BattleshipsClient
 
                 Invalidate();
             });
+        }
+
+        private void OnOpponentShot(bool hit, int x, int y)
+        {
+            
+        }
+
+        private void OnMyShotReceived(bool hit)
+        {
+            
         }
 
         private void RunOnUIThread(Action action)
@@ -396,10 +407,8 @@ namespace BattleshipsClient
                     int x = e.X - enemyBoardX;
                     int y = e.Y - enemyBoardY;
 
-                    int xx = (e.X - enemyBoardX) / cellSize;
-                    int yy = (e.Y - enemyBoardY) / cellSize;
-
-                    //Debug.WriteLine($"x: {xx}, y: {yy} [{(Battleships.WithinBoard(xx, yy) && x >= 0 && y >= 0 ? "YES" : "NO")}]");
+                    int xx = x / cellSize;
+                    int yy = y / cellSize;
 
                     if (!Battleships.WithinBoard(xx, yy) || x < 0 || y < 0)
                         return;
