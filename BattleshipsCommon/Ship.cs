@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace BattleshipsClient
+namespace BattleshipsCommon
 {
     public class Ship : ShipProperties
     {

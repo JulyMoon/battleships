@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Windows.Forms;
+using BattleshipsCommon;
 
 namespace BattleshipsClient
 {
@@ -12,8 +13,8 @@ namespace BattleshipsClient
     {
         public const bool DEBUG = false;
 
-        private const int boardWidth = Battleships.BoardWidth;
-        private const int boardHeight = Battleships.BoardHeight;
+        private const int boardWidth = Game.BoardWidth;
+        private const int boardHeight = Game.BoardHeight;
         private const int myBoardX = 40;
         private const int myBoardY = 40;
         private const int enemyBoardX = myBoardX + (boardWidth + 3) * cellSize;
@@ -72,7 +73,7 @@ namespace BattleshipsClient
         {
             InitializeComponent();
 
-            AdoptShipSet(Battleships.ShipSet);
+            AdoptShipSet(Game.ShipSet);
 
             controlGroup = new Control[] {randomButton, playButton};
             CenterControls(new Rectangle(shipWindowX, shipWindowY + shipWindowHeight, shipWindowWidth, boardHeight * cellSize - shipWindowHeight), controlGroup);
@@ -179,7 +180,7 @@ namespace BattleshipsClient
         private static Rectangle GetShipRectangle(ShipProperties shipProps)
         {
             int shipWidth, shipHeight;
-            Battleships.GetShipDimensions(shipProps.IsVertical, shipProps.Size, out shipWidth, out shipHeight);
+            Game.GetShipDimensions(shipProps.IsVertical, shipProps.Size, out shipWidth, out shipHeight);
             shipWidth *= cellSize;
             shipHeight *= cellSize;
 
@@ -410,7 +411,7 @@ namespace BattleshipsClient
                     int xx = x / cellSize;
                     int yy = y / cellSize;
 
-                    if (!Battleships.WithinBoard(xx, yy) || x < 0 || y < 0)
+                    if (!Game.WithinBoard(xx, yy) || x < 0 || y < 0)
                         return;
 
                     game.Shoot(xx, yy);
@@ -491,7 +492,7 @@ namespace BattleshipsClient
 
             var ship = new ShipProperties(shipsize, shipvertical, snapX, snapY);
 
-            snapping = Battleships.WithinBoard(ship) && !Battleships.Overlaps(ships, ship);
+            snapping = Game.WithinBoard(ship) && !Game.Overlaps(ships, ship);
         }
 
         private async void playButton_Click(object sender, EventArgs e)
@@ -519,7 +520,7 @@ namespace BattleshipsClient
             for (int i = 0; i < setShips.Count; i++)
                 setShips[i] = Tuple.Create(setShips[i].Item1, true);
 
-            var randomShips = Battleships.GetRandomShips();
+            var randomShips = Game.GetRandomShips();
             currentShips.Clear();
             foreach (var ship in randomShips)
                 currentShips.Add(Tuple.Create(ship, false));

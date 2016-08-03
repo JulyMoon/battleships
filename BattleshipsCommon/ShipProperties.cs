@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace BattleshipsClient
+namespace BattleshipsCommon
 {
     public class ShipProperties
     {

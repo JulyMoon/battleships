@@ -5,7 +5,13 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BattleshipsClient", "BattleshipsClient\BattleshipsClient.csproj", "{D4872A60-426A-455F-8286-64B0731C5ECC}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BattleshipsCommon", "BattleshipsCommon\BattleshipsCommon.shproj", "{6E3AE9A4-8577-4E29-A38B-B031176EA34A}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		BattleshipsCommon\BattleshipsCommon.projitems*{6e3ae9a4-8577-4e29-a38b-b031176ea34a}*SharedItemsImports = 13
+		BattleshipsCommon\BattleshipsCommon.projitems*{d4872a60-426a-455f-8286-64b0731c5ecc}*SharedItemsImports = 4
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
