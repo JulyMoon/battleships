@@ -7,6 +7,8 @@ using System.Net;
 using System.Windows.Forms;
 using BattleshipsCommon;
 
+// todo: fix the rightclicking while dragging over control bug
+
 namespace BattleshipsClient
 {
     public partial class MainWindow : Form
@@ -43,8 +45,6 @@ namespace BattleshipsClient
         private readonly List<Tuple<ShipProperties, bool>> currentShips = new List<Tuple<ShipProperties, bool>>();
         private readonly List<Tuple<ShipProperties, bool>> setShips = new List<Tuple<ShipProperties, bool>>();
                                                   // ^ this bool represents whether the ship was used or not
-
-        private bool myTurn;
 
         private bool draggingSetShip;
         private int dragIndex;
@@ -84,12 +84,11 @@ namespace BattleshipsClient
             game.MyShotReceived += OnMyShotReceived;
         }
 
-        private void OnOpponentFound(bool myTurn_)
+        private void OnOpponentFound()
         {
             RunOnUIThread(() =>
             {
-                myTurn = myTurn_;
-                statusLabel.Text = myTurn ? myTurnString : opponentsTurnString;
+                statusLabel.Text = game.MyTurn ? myTurnString : opponentsTurnString;
                 stage = Stage.Playing;
 
                 foreach (var control in controlGroup)
@@ -101,12 +100,12 @@ namespace BattleshipsClient
 
         private void OnOpponentShot(bool hit, int x, int y)
         {
-            
+            Invalidate();
         }
 
         private void OnMyShotReceived(bool hit)
         {
-            
+            Invalidate();
         }
 
         private void RunOnUIThread(Action action)
@@ -309,7 +308,48 @@ namespace BattleshipsClient
             DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, myBoardX, myBoardY);
             DrawBoardShips(e.Graphics, shipAlivePen, shipDeadPen, shipDeadCrossPen, game.MyShips, myBoardX, myBoardY);
 
+            int boardx, boardy;
+            if (game.MyTurn)
+            {
+                boardx = enemyBoardX;
+                boardy = enemyBoardY;
+            }
+            else
+            {
+                boardx = myBoardX;
+                boardy = myBoardY;
+            }
+
+            DrawTurnIndicator(e.Graphics, new Pen(Color.Coral, 3), boardx, boardy);
             DrawBoard(e.Graphics, boardTextBrush, boardFont, boardLinePen, enemyBoardX, enemyBoardY);
+            DrawEnemyBoardShips(e.Graphics, shipDeadPen, shipDeadCrossPen, game.EnemyShips, enemyBoardX, enemyBoardY);
+        }
+
+        private void DrawEnemyBoardShips(Graphics g, Pen deadPen, Pen crossPen, Battleships.Cell[,] ships, int boardx, int boardy)
+        {
+            for (int x = 0; x < Game.BoardWidth; x++)
+                for (int y = 0; y < Game.BoardHeight; y++)
+                {
+                    switch (ships[x, y])
+                    {
+                        case Battleships.Cell.Ship:
+                            g.DrawLine(crossPen, boardx + x * cellSize, boardy + y * cellSize, boardx + (x + 1) * cellSize, boardy + (y + 1) * cellSize);
+                            g.DrawLine(crossPen, boardx + x * cellSize, boardy + (y + 1) * cellSize, boardx + (x + 1) * cellSize, boardy + y * cellSize);
+                            break;
+
+                        case Battleships.Cell.Empty:
+                            const float ratio = 1f / 4;
+                            const float add = (1 - ratio) / 2;
+                            g.FillEllipse(Brushes.Black, boardx + (x + add) * cellSize, boardy + (y + add) * cellSize, add * cellSize, add * cellSize);
+                            break;
+                    }
+                }
+        }
+
+        private static void DrawTurnIndicator(Graphics g, Pen pen, int boardx, int boardy)
+        {
+            const int space = 30;
+            g.DrawRectangle(pen, boardx - space, boardy - space, boardWidth * cellSize + space * 2, boardHeight * cellSize + space * 2);
         }
 
         private void DrawMatchmakingStage(PaintEventArgs e)

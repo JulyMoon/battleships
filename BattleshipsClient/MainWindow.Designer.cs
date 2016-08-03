@@ -57,6 +57,7 @@
             // 
             // statusLabel
             // 
+            this.statusLabel.BackColor = System.Drawing.Color.Transparent;
             this.statusLabel.Font = new System.Drawing.Font("Verdana", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.statusLabel.Location = new System.Drawing.Point(9, 79);
             this.statusLabel.Name = "statusLabel";

@@ -34,7 +34,9 @@ namespace BattleshipsClient
             writer = new BinaryWriter(client.GetStream());
             reader = new BinaryReader(client.GetStream());
 
+#pragma warning disable 4014
             Task.Run(() => Listen());
+#pragma warning restore 4014
 
             SendName(name);
         }

@@ -11,17 +11,45 @@ namespace BattleshipsClient
     {
         private Client client = new Client();
 
-        public event Client.TurnEventHandler OpponentFound;
+        public bool MyTurn { get; private set; }
+        public int LastShotX { get; private set; }
+        public int LastShotY { get; private set; }
+
+        public delegate void OpponentFoundEventHandler();
+
+        public event OpponentFoundEventHandler OpponentFound;
         public event Client.OpponentShotEventHandler OpponentShot;
         public event Client.MyShotEventHandler MyShotReceived;
 
-        private void OnOpponentFound(bool myTurn)
+        private List<ShipProperties> myShipProps;
+        private List<Ship> myShips;
+
+        public enum Cell { Unknown, Ship, Empty }
+
+        public Cell[,] EnemyShips = new Cell[Game.BoardWidth, Game.BoardHeight];
+
+        public ReadOnlyCollection<ShipProperties> MyShipProps => myShipProps.AsReadOnly();
+        public ReadOnlyCollection<Ship> MyShips => myShips.AsReadOnly();
+
+        public Battleships()
         {
-            myShips = myShipProps.Select(shipProps => new Ship(shipProps)).ToList();
-            OpponentFound?.Invoke(myTurn);
+            for (int x = 0; x < Game.BoardWidth; x++)
+                for (int y = 0; y < Game.BoardHeight; y++)
+                    EnemyShips[x, y] = Cell.Unknown;
+
+            client.OpponentFound += OnOpponentFound;
+            client.OpponentShot += OnOpponentShot;
+            client.MyShotReceived += OnMyShotReceived;
         }
 
-        private void OnOpponentShot(bool hit_, int x, int y)
+        private void OnOpponentFound(bool myTurn)
+        {
+            MyTurn = myTurn;
+            myShips = myShipProps.Select(shipProps => new Ship(shipProps)).ToList();
+            OpponentFound?.Invoke();
+        }
+
+        private void OnOpponentShot(bool hit_notUsed, int x, int y)
         {
             int index, segment;
             bool hit = Game.GetShotShipSegment(myShips, x, y, out index, out segment);
@@ -31,7 +59,7 @@ namespace BattleshipsClient
             }
             else
             {
-                // todo
+                MyTurn = true;
             }
 
             OpponentShot?.Invoke(hit, x, y);
@@ -39,20 +67,12 @@ namespace BattleshipsClient
 
         private void OnMyShotReceived(bool hit)
         {
+            EnemyShips[LastShotX, LastShotY] = hit ? Cell.Ship : Cell.Empty;
+
+            if (!hit)
+                MyTurn = false;
+
             MyShotReceived?.Invoke(hit);
-        }
-
-        private List<ShipProperties> myShipProps;
-        private List<Ship> myShips;
-
-        public ReadOnlyCollection<ShipProperties> MyShipProps => myShipProps.AsReadOnly();
-        public ReadOnlyCollection<Ship> MyShips => myShips.AsReadOnly();
-
-        public Battleships()
-        {
-            client.OpponentFound += OnOpponentFound;
-            client.OpponentShot += OnOpponentShot;
-            client.MyShotReceived += OnMyShotReceived;
         }
 
         public void EnterMatchmaking(List<ShipProperties> shipPropArray)
@@ -61,7 +81,12 @@ namespace BattleshipsClient
             client.EnterMatchmaking(shipPropArray);
         }
 
-        public void Shoot(int x, int y) => client.Shoot(x, y);
+        public void Shoot(int x, int y)
+        {
+            LastShotX = x;
+            LastShotY = y;
+            client.Shoot(x, y);
+        }
 
         public async Task ConnectAsync(IPAddress ip, string name) => await client.ConnectAsync(ip, name);
 
