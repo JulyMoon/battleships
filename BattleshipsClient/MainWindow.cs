@@ -42,6 +42,7 @@ namespace BattleshipsClient
         private static readonly Pen shipWindowPen = boardPen;
         private static readonly Pen myTurnPen = new Pen(Color.FromArgb(turnIndicatorAlpha, Color.LimeGreen), turnIndicatorWidth);
         private static readonly Pen enemyTurnPen = new Pen(Color.FromArgb(turnIndicatorAlpha, Color.Red), turnIndicatorWidth);
+        private static readonly Brush missedBrush = new SolidBrush(Color.FromArgb(165, Color.Black));
         private static readonly Font boardFont = new Font("Consolas", 10);
 
         private readonly Battleships game = new Battleships();
@@ -197,8 +198,6 @@ namespace BattleshipsClient
 
         private static void DrawBoardShip(Graphics g, Pen pen, Ship ship, int boardx, int boardy)
         {
-            DrawAbsoluteShip(g, ship.Dead ? shipDeadPen : pen, new ShipProperties(ship.Size, ship.IsVertical, boardx + ship.X * cellSize, boardy + ship.Y * cellSize));
-
             for (int i = 0; i < ship.Size; i++)
             {
                 if (ship.IsAlive[i])
@@ -222,6 +221,8 @@ namespace BattleshipsClient
                 g.DrawLine(shipDeadCrossPen, x, y, x + cellSize, y + cellSize);
                 g.DrawLine(shipDeadCrossPen, x, y + cellSize, x + cellSize, y);
             }
+
+            DrawAbsoluteShip(g, ship.Dead ? shipDeadPen : pen, new ShipProperties(ship.Size, ship.IsVertical, boardx + ship.X * cellSize, boardy + ship.Y * cellSize));
         }
 
         private static void DrawBoard(Graphics g, int boardx, int boardy)
@@ -332,7 +333,7 @@ namespace BattleshipsClient
                         case Battleships.Cell.Empty:
                             const float ratio = 1f / 4;
                             const float add = (1 - ratio) / 2;
-                            g.FillEllipse(Brushes.Black, boardx + (x + add) * cellSize, boardy + (y + add) * cellSize, add * cellSize, add * cellSize);
+                            g.FillEllipse(missedBrush, boardx + (x + add) * cellSize, boardy + (y + add) * cellSize, ratio * cellSize, ratio * cellSize);
                             break;
                     }
                 }
