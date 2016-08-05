@@ -35,8 +35,8 @@ namespace BattleshipsClient
         
         private static readonly Pen boardPen = new Pen(Color.FromArgb(180, 180, 255));
         private static readonly Brush boardTextBrush = Brushes.Black;
-        private static readonly Pen shipEditablePen = new Pen(Color.DodgerBlue, shipPenWidth);
-        private static readonly Pen shipPen = new Pen(Color.FromArgb(0, 90, 156), shipPenWidth);
+        private static readonly Pen shipEditablePen = new Pen(Color.FromArgb(110, 120, 240), shipPenWidth);
+        private static readonly Pen shipPen = new Pen(Color.DodgerBlue, shipPenWidth);
         private static readonly Pen shipSnapPen = new Pen(Color.ForestGreen, shipPenWidth);
         private static readonly Pen shipDeadPen = new Pen(Color.Red, shipPenWidth);
         private static readonly Pen shipDeadCrossPen = new Pen(shipDeadPen.Color, 2);
@@ -45,7 +45,8 @@ namespace BattleshipsClient
         private static readonly Pen enemyTurnPen = new Pen(Color.FromArgb(turnIndicatorAlpha, Color.Red), turnIndicatorWidth);
         private static readonly Pen hoverPen = new Pen(Color.MediumSeaGreen, hoverPenWidth);
         private static readonly Pen hoverDisabledPen = new Pen(Color.DarkGray, hoverPenWidth);
-        private static readonly Brush missedBrush = new SolidBrush(Color.FromArgb(165, Color.Black));
+        private static readonly Brush emptyBrush = new SolidBrush(Color.DimGray);
+        private static readonly Brush verifiedEmptyBrush = new SolidBrush(Color.DarkGray);
         private static readonly Font boardFont = new Font("Consolas", 10);
 
         private readonly Battleships game = new Battleships();
@@ -70,7 +71,9 @@ namespace BattleshipsClient
         private bool hovering; // over the enemy board;
         private int hoverX;
         private int hoverY;
-        private bool canShoot => hovering && game.MyTurn && game.EnemyShips[hoverX, hoverY] == Battleships.Cell.Unknown;
+        private bool canShoot => hovering && game.MyTurn
+            && game.GetEnemyCell(hoverX, hoverY) == Battleships.Cell.Unknown
+            && !game.GetVerifiedEmptyCell(hoverX, hoverY);
 
         private readonly Control[] controlGroup;
 
@@ -323,7 +326,7 @@ namespace BattleshipsClient
             DrawBoardShips(e.Graphics, shipPen, game.MyShips, myBoardX, myBoardY);
             
             DrawBoard(e.Graphics, enemyBoardX, enemyBoardY);
-            DrawEnemyBoardShips(e.Graphics, game.EnemyShips, enemyBoardX, enemyBoardY);
+            DrawEnemyBoardCells(e.Graphics);
 
             if (hovering)
                 DrawHoverIndicator(e.Graphics);
@@ -332,25 +335,34 @@ namespace BattleshipsClient
         private void DrawHoverIndicator(Graphics g)
             => g.DrawRectangle(canShoot ? hoverPen : hoverDisabledPen, enemyBoardX + hoverX * cellSize, enemyBoardY + hoverY * cellSize, cellSize, cellSize);
 
-        private static void DrawEnemyBoardShips(Graphics g, Battleships.Cell[,] ships, int boardx, int boardy)
+        private void DrawEnemyBoardCells(Graphics g)
         {
             for (int x = 0; x < Game.BoardWidth; x++)
                 for (int y = 0; y < Game.BoardHeight; y++)
                 {
-                    switch (ships[x, y])
+                    switch (game.GetEnemyCell(x, y))
                     {
                         case Battleships.Cell.Ship:
-                            g.DrawLine(shipDeadCrossPen, boardx + x * cellSize, boardy + y * cellSize, boardx + (x + 1) * cellSize, boardy + (y + 1) * cellSize);
-                            g.DrawLine(shipDeadCrossPen, boardx + x * cellSize, boardy + (y + 1) * cellSize, boardx + (x + 1) * cellSize, boardy + y * cellSize);
+                            g.DrawLine(shipDeadCrossPen, enemyBoardX + x * cellSize, enemyBoardY + y * cellSize, enemyBoardX + (x + 1) * cellSize, enemyBoardY + (y + 1) * cellSize);
+                            g.DrawLine(shipDeadCrossPen, enemyBoardX + x * cellSize, enemyBoardY + (y + 1) * cellSize, enemyBoardX + (x + 1) * cellSize, enemyBoardY + y * cellSize);
                             break;
 
                         case Battleships.Cell.Empty:
-                            const float ratio = 1f / 4;
-                            const float add = (1 - ratio) / 2;
-                            g.FillEllipse(missedBrush, boardx + (x + add) * cellSize, boardy + (y + add) * cellSize, ratio * cellSize, ratio * cellSize);
+                            DrawEmptyCell(g, true, x, y);
+                            break;
+                        case Battleships.Cell.Unknown:
+                            if (game.GetVerifiedEmptyCell(x, y))
+                                DrawEmptyCell(g, false, x, y);
                             break;
                     }
                 }
+        }
+
+        private void DrawEmptyCell(Graphics g, bool real, int x, int y)
+        {
+            const float ratio = 1f / 6;
+            const float add = (1 - ratio) / 2;
+            g.FillEllipse(real ? emptyBrush : verifiedEmptyBrush, enemyBoardX + (x + add) * cellSize, enemyBoardY + (y + add) * cellSize, ratio * cellSize, ratio * cellSize);
         }
 
         private static void DrawTurnIndicator(Graphics g, Pen pen, int boardx, int boardy)

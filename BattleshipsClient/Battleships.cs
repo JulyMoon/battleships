@@ -9,7 +9,15 @@ namespace BattleshipsClient
 {
     public class Battleships
     {
-        private Client client = new Client();
+        private readonly Client client = new Client();
+
+        private List<ShipProperties> myShipProps;
+        private List<Ship> myShips;
+
+        private readonly bool[,] verifiedEmptyCell = new bool[Game.BoardWidth, Game.BoardHeight];
+        private static readonly int[,] diagonalNeighbors = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } };
+
+        private readonly Cell[,] enemyCells = new Cell[Game.BoardWidth, Game.BoardHeight];
 
         public bool MyTurn { get; private set; }
         public int LastShotX { get; private set; }
@@ -21,12 +29,10 @@ namespace BattleshipsClient
         public event Client.OpponentShotEventHandler OpponentShot;
         public event Client.MyShotEventHandler MyShotReceived;
 
-        private List<ShipProperties> myShipProps;
-        private List<Ship> myShips;
-
         public enum Cell { Unknown, Ship, Empty }
 
-        public Cell[,] EnemyShips = new Cell[Game.BoardWidth, Game.BoardHeight];
+        public Cell GetEnemyCell(int x, int y) => enemyCells[x, y];
+        public bool GetVerifiedEmptyCell(int x, int y) => verifiedEmptyCell[x, y];
 
         public ReadOnlyCollection<ShipProperties> MyShipProps => myShipProps.AsReadOnly();
         public ReadOnlyCollection<Ship> MyShips => myShips.AsReadOnly();
@@ -35,7 +41,10 @@ namespace BattleshipsClient
         {
             for (int x = 0; x < Game.BoardWidth; x++)
                 for (int y = 0; y < Game.BoardHeight; y++)
-                    EnemyShips[x, y] = Cell.Unknown;
+                {
+                    enemyCells[x, y] = Cell.Unknown;
+                    verifiedEmptyCell[x, y] = false;
+                }
 
             client.OpponentFound += OnOpponentFound;
             client.OpponentShot += OnOpponentShot;
@@ -49,7 +58,7 @@ namespace BattleshipsClient
             OpponentFound?.Invoke();
         }
 
-        private void OnOpponentShot(bool hit_notUsed, int x, int y)
+        private void OnOpponentShot(bool hit_notUsed___________, int x, int y)
         {
             int index, segment;
             bool hit = Game.GetShotShipSegment(myShips, x, y, out index, out segment);
@@ -67,9 +76,19 @@ namespace BattleshipsClient
 
         private void OnMyShotReceived(bool hit)
         {
-            EnemyShips[LastShotX, LastShotY] = hit ? Cell.Ship : Cell.Empty;
+            enemyCells[LastShotX, LastShotY] = hit ? Cell.Ship : Cell.Empty;
 
-            if (!hit)
+            if (hit)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    int x = LastShotX + diagonalNeighbors[i, 0];
+                    int y = LastShotY + diagonalNeighbors[i, 1];
+                    if (Game.WithinBoard(x, y))
+                        verifiedEmptyCell[x, y] = true;
+                }
+            }
+            else
                 MyTurn = false;
 
             MyShotReceived?.Invoke(hit);
