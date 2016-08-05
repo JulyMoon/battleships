@@ -11,13 +11,15 @@ namespace BattleshipsClient
     {
         private readonly Client client = new Client();
 
+        private static readonly int[,] diagonalNeighbors = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } };
+
         private List<ShipProperties> myShipProps;
         private List<Ship> myShips;
 
-        private readonly bool[,] verifiedEmptyCell = new bool[Game.BoardWidth, Game.BoardHeight];
-        private static readonly int[,] diagonalNeighbors = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } };
-
+        private readonly bool[,] enemyVerifiedEmptyCells = new bool[Game.BoardWidth, Game.BoardHeight];
         private readonly Cell[,] enemyCells = new Cell[Game.BoardWidth, Game.BoardHeight];
+        private readonly bool[,] myVerifiedEmptyCells = new bool[Game.BoardWidth, Game.BoardHeight];
+        private readonly bool[,] myMissCells = new bool[Game.BoardWidth, Game.BoardHeight];
 
         public bool MyTurn { get; private set; }
         public int LastShotX { get; private set; }
@@ -32,7 +34,9 @@ namespace BattleshipsClient
         public enum Cell { Unknown, Ship, Empty }
 
         public Cell GetEnemyCell(int x, int y) => enemyCells[x, y];
-        public bool GetVerifiedEmptyCell(int x, int y) => verifiedEmptyCell[x, y];
+        public bool GetEnemyVerifiedEmptyCell(int x, int y) => enemyVerifiedEmptyCells[x, y];
+        public bool GetMyVerifiedEmptyCell(int x, int y) => myVerifiedEmptyCells[x, y];
+        public bool GetMyMissCell(int x, int y) => myMissCells[x, y];
 
         public ReadOnlyCollection<ShipProperties> MyShipProps => myShipProps.AsReadOnly();
         public ReadOnlyCollection<Ship> MyShips => myShips.AsReadOnly();
@@ -43,7 +47,9 @@ namespace BattleshipsClient
                 for (int y = 0; y < Game.BoardHeight; y++)
                 {
                     enemyCells[x, y] = Cell.Unknown;
-                    verifiedEmptyCell[x, y] = false;
+                    enemyVerifiedEmptyCells[x, y] = false;
+                    myVerifiedEmptyCells[x, y] = false;
+                    myMissCells[x, y] = false;
                 }
 
             client.OpponentFound += OnOpponentFound;
@@ -65,13 +71,26 @@ namespace BattleshipsClient
             if (hit)
             {
                 myShips[index].IsAlive[segment] = false;
+                SetVerifiedEmptyCells(myVerifiedEmptyCells, x, y);
             }
             else
             {
+                myMissCells[x, y] = true;
                 MyTurn = true;
             }
 
             OpponentShot?.Invoke(hit, x, y);
+        }
+
+        private static void SetVerifiedEmptyCells(bool[,] verifiedEmptyCells, int x, int y)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                int xx = x + diagonalNeighbors[i, 0];
+                int yy = y + diagonalNeighbors[i, 1];
+                if (Game.WithinBoard(xx, yy))
+                    verifiedEmptyCells[xx, yy] = true;
+            }
         }
 
         private void OnMyShotReceived(bool hit)
@@ -80,13 +99,7 @@ namespace BattleshipsClient
 
             if (hit)
             {
-                for (int i = 0; i < 4; i++)
-                {
-                    int x = LastShotX + diagonalNeighbors[i, 0];
-                    int y = LastShotY + diagonalNeighbors[i, 1];
-                    if (Game.WithinBoard(x, y))
-                        verifiedEmptyCell[x, y] = true;
-                }
+                SetVerifiedEmptyCells(enemyVerifiedEmptyCells, LastShotX, LastShotY);
             }
             else
                 MyTurn = false;

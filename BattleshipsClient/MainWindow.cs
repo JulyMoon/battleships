@@ -29,6 +29,7 @@ namespace BattleshipsClient
         private const int turnIndicatorAlpha = 120;
         private const int hoverPenWidth = 3;
         private const int shipPenWidth = 3;
+        private const float emptyCellRatio = 1f / 6;
 
         private const string myTurnString = "Your turn";
         private const string opponentsTurnString = "Opponent's turn";
@@ -73,7 +74,7 @@ namespace BattleshipsClient
         private int hoverY;
         private bool canShoot => hovering && game.MyTurn
             && game.GetEnemyCell(hoverX, hoverY) == Battleships.Cell.Unknown
-            && !game.GetVerifiedEmptyCell(hoverX, hoverY);
+            && !game.GetEnemyVerifiedEmptyCell(hoverX, hoverY);
 
         private readonly Control[] controlGroup;
 
@@ -324,6 +325,7 @@ namespace BattleshipsClient
 
             DrawBoard(e.Graphics, myBoardX, myBoardY);
             DrawBoardShips(e.Graphics, shipPen, game.MyShips, myBoardX, myBoardY);
+            DrawMyMissCells(e.Graphics);
             
             DrawBoard(e.Graphics, enemyBoardX, enemyBoardY);
             DrawEnemyBoardCells(e.Graphics);
@@ -334,6 +336,18 @@ namespace BattleshipsClient
 
         private void DrawHoverIndicator(Graphics g)
             => g.DrawRectangle(canShoot ? hoverPen : hoverDisabledPen, enemyBoardX + hoverX * cellSize, enemyBoardY + hoverY * cellSize, cellSize, cellSize);
+
+        private void DrawMyMissCells(Graphics g)
+        {
+            for (int x = 0; x < Game.BoardWidth; x++)
+                for (int y = 0; y < Game.BoardHeight; y++)
+                {
+                    if (game.GetMyMissCell(x, y))
+                        DrawEmptyCell(g, true, x, y, myBoardX, myBoardY);
+                    else if (game.GetMyVerifiedEmptyCell(x, y))
+                        DrawEmptyCell(g, false, x, y, myBoardX, myBoardY);
+                }
+        }
 
         private void DrawEnemyBoardCells(Graphics g)
         {
@@ -347,22 +361,16 @@ namespace BattleshipsClient
                             g.DrawLine(shipDeadCrossPen, enemyBoardX + x * cellSize, enemyBoardY + (y + 1) * cellSize, enemyBoardX + (x + 1) * cellSize, enemyBoardY + y * cellSize);
                             break;
 
-                        case Battleships.Cell.Empty:
-                            DrawEmptyCell(g, true, x, y);
-                            break;
-                        case Battleships.Cell.Unknown:
-                            if (game.GetVerifiedEmptyCell(x, y))
-                                DrawEmptyCell(g, false, x, y);
-                            break;
+                        case Battleships.Cell.Empty: DrawEmptyCell(g, true, x, y, enemyBoardX, enemyBoardY); break;
+                        case Battleships.Cell.Unknown: if (game.GetEnemyVerifiedEmptyCell(x, y)) DrawEmptyCell(g, false, x, y, enemyBoardX, enemyBoardY); break;
                     }
                 }
         }
 
-        private void DrawEmptyCell(Graphics g, bool real, int x, int y)
+        private static void DrawEmptyCell(Graphics g, bool real, int x, int y, int boardx, int boardy)
         {
-            const float ratio = 1f / 6;
-            const float add = (1 - ratio) / 2;
-            g.FillEllipse(real ? emptyBrush : verifiedEmptyBrush, enemyBoardX + (x + add) * cellSize, enemyBoardY + (y + add) * cellSize, ratio * cellSize, ratio * cellSize);
+            const float add = (1 - emptyCellRatio) / 2;
+            g.FillEllipse(real ? emptyBrush : verifiedEmptyBrush, boardx + (x + add) * cellSize, boardy + (y + add) * cellSize, emptyCellRatio * cellSize, emptyCellRatio * cellSize);
         }
 
         private static void DrawTurnIndicator(Graphics g, Pen pen, int boardx, int boardy)
