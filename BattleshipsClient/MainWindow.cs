@@ -70,6 +70,7 @@ namespace BattleshipsClient
         private bool hovering; // over the enemy board;
         private int hoverX;
         private int hoverY;
+        private bool canShoot => hovering && game.MyTurn && game.EnemyShips[hoverX, hoverY] == Battleships.Cell.Unknown;
 
         private readonly Control[] controlGroup;
 
@@ -329,7 +330,7 @@ namespace BattleshipsClient
         }
 
         private void DrawHoverIndicator(Graphics g)
-            => g.DrawRectangle(game.MyTurn ? hoverPen : hoverDisabledPen, enemyBoardX + hoverX * cellSize, enemyBoardY + hoverY * cellSize, cellSize, cellSize);
+            => g.DrawRectangle(canShoot ? hoverPen : hoverDisabledPen, enemyBoardX + hoverX * cellSize, enemyBoardY + hoverY * cellSize, cellSize, cellSize);
 
         private static void DrawEnemyBoardShips(Graphics g, Battleships.Cell[,] ships, int boardx, int boardy)
         {
@@ -447,7 +448,7 @@ namespace BattleshipsClient
                     Snap(e);
                     break;
 
-                case Stage.Playing: if (hovering && game.MyTurn) game.Shoot(hoverX, hoverY); break;
+                case Stage.Playing: if (canShoot) game.Shoot(hoverX, hoverY); break;
             }
         }
 
