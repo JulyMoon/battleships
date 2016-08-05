@@ -27,6 +27,7 @@ namespace BattleshipsClient
         private const int turnIndicatorPadding = 5;
         private const int turnIndicatorWidth = 5;
         private const int turnIndicatorAlpha = 120;
+        private const int hoverPenWidth = 3;
         private const int shipPenWidth = 3;
 
         private const string myTurnString = "Your turn";
@@ -42,6 +43,8 @@ namespace BattleshipsClient
         private static readonly Pen shipWindowPen = boardPen;
         private static readonly Pen myTurnPen = new Pen(Color.FromArgb(turnIndicatorAlpha, Color.LimeGreen), turnIndicatorWidth);
         private static readonly Pen enemyTurnPen = new Pen(Color.FromArgb(turnIndicatorAlpha, Color.Red), turnIndicatorWidth);
+        private static readonly Pen hoverPen = new Pen(Color.MediumSeaGreen, hoverPenWidth);
+        private static readonly Pen hoverDisabledPen = new Pen(Color.DarkGray, hoverPenWidth);
         private static readonly Brush missedBrush = new SolidBrush(Color.FromArgb(165, Color.Black));
         private static readonly Font boardFont = new Font("Consolas", 10);
 
@@ -63,6 +66,10 @@ namespace BattleshipsClient
 
         private int shipWindowWidth;
         private int shipWindowHeight;
+
+        private bool hovering; // over the enemy board;
+        private int hoverX;
+        private int hoverY;
 
         private readonly Control[] controlGroup;
 
@@ -316,7 +323,13 @@ namespace BattleshipsClient
             
             DrawBoard(e.Graphics, enemyBoardX, enemyBoardY);
             DrawEnemyBoardShips(e.Graphics, game.EnemyShips, enemyBoardX, enemyBoardY);
+
+            if (hovering)
+                DrawHoverIndicator(e.Graphics);
         }
+
+        private void DrawHoverIndicator(Graphics g)
+            => g.DrawRectangle(game.MyTurn ? hoverPen : hoverDisabledPen, enemyBoardX + hoverX * cellSize, enemyBoardY + hoverY * cellSize, cellSize, cellSize);
 
         private static void DrawEnemyBoardShips(Graphics g, Battleships.Cell[,] ships, int boardx, int boardy)
         {
@@ -434,18 +447,7 @@ namespace BattleshipsClient
                     Snap(e);
                     break;
 
-                case Stage.Playing:
-                    int x = e.X - enemyBoardX;
-                    int y = e.Y - enemyBoardY;
-
-                    int xx = x / cellSize;
-                    int yy = y / cellSize;
-
-                    if (!Game.WithinBoard(xx, yy) || x < 0 || y < 0)
-                        return;
-
-                    game.Shoot(xx, yy);
-                    break;
+                case Stage.Playing: if (hovering && game.MyTurn) game.Shoot(hoverX, hoverY); break;
             }
         }
 
@@ -494,11 +496,20 @@ namespace BattleshipsClient
 
         private void MainWindow_MouseMove(object sender, MouseEventArgs e)
         {
-            if (stage != Stage.Placement)
-                return;
+            switch (stage)
+            {
+                case Stage.Placement: if (dragging) Snap(e); break;
+                case Stage.Playing:
+                    int x = e.X - enemyBoardX;
+                    int y = e.Y - enemyBoardY;
 
-            if (dragging)
-                Snap(e);
+                    hoverX = x / cellSize;
+                    hoverY = y / cellSize;
+
+                    hovering = Game.WithinBoard(hoverX, hoverY) && x >= 0 && y >= 0;
+                    Invalidate();
+                    break;
+            }
         }
 
         private static IEnumerable<ShipProperties> GetNotUsedShips(List<Tuple<ShipProperties, bool>> ships)
