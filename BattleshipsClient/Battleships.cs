@@ -64,7 +64,7 @@ namespace BattleshipsClient
             OpponentFound?.Invoke();
         }
 
-        private void OnOpponentShot(bool hit_notUsed___________, int x, int y)
+        private void OnOpponentShot(int x, int y)
         {
             int index, segment;
             bool hit = Game.GetShotShipSegment(myShips, x, y, out index, out segment);
@@ -79,7 +79,7 @@ namespace BattleshipsClient
                 MyTurn = true;
             }
 
-            OpponentShot?.Invoke(hit, x, y);
+            OpponentShot?.Invoke(x, y);
         }
 
         private static void SetVerifiedEmptyCells(bool[,] verifiedEmptyCells, int x, int y)

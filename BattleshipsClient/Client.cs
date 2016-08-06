@@ -17,7 +17,7 @@ namespace BattleshipsClient
         private const int port = 7070;
 
         public delegate void TurnEventHandler(bool myTurn);
-        public delegate void OpponentShotEventHandler(bool hit, int x, int y);
+        public delegate void OpponentShotEventHandler(int x, int y);
         public delegate void MyShotEventHandler(bool hit);
 
         public event TurnEventHandler OpponentFound;
@@ -25,7 +25,7 @@ namespace BattleshipsClient
         public event MyShotEventHandler MyShotReceived;
 
         private void OnOpponentFound(bool myTurn) => OpponentFound?.Invoke(myTurn);
-        private void OnOpponentShot(bool hit, int x, int y) => OpponentShot?.Invoke(hit, x, y);
+        private void OnOpponentShot(int x, int y) => OpponentShot?.Invoke(x, y);
         private void OnMyShotReceived(bool hit) => MyShotReceived?.Invoke(hit);
 
         public async Task ConnectAsync(IPAddress IP, string name)
@@ -66,26 +66,14 @@ namespace BattleshipsClient
                 string header = traffic.Substring(0, delimiterIndex);
                 string data = traffic.Substring(delimiterIndex + 1);
 
-                const string opponentString = "opponent";
-                const string missedString = "Missed";
-                const string hitString = "Hit";
-                const string opponentMissedString = opponentString + missedString;
-                const string opponentHitString = opponentString + hitString;
-                if (header.StartsWith(opponentString))
+                const string opponentShotString = "opponentShot";
+                if (header == opponentShotString)
                 {
                     var split = data.Split('\'');
                     int x = Int32.Parse(split[0]);
                     int y = Int32.Parse(split[1]);
 
-                    bool hit;
-                    if (header.EndsWith(missedString) && header.Length == opponentMissedString.Length)
-                        hit = false;
-                    else if (header.EndsWith(hitString) && header.Length == opponentHitString.Length)
-                        hit = true;
-                    else
-                        throw new Exception($"It can only be \"{opponentMissedString}\" or \"{opponentHitString}\" but it is {data}");
-
-                    OnOpponentShot(hit, x, y);
+                    OnOpponentShot(x, y);
                 }
                 else
                     throw new NotImplementedException();

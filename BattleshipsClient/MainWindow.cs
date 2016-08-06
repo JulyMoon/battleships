@@ -114,7 +114,7 @@ namespace BattleshipsClient
             });
         }
 
-        private void OnOpponentShot(bool hit, int x, int y)
+        private void OnOpponentShot(int x, int y)
         {
             Invalidate();
         }
