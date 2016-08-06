@@ -16,9 +16,11 @@ namespace BattleshipsClient
         private BinaryReader reader;
         private const int port = 7070;
 
+        public enum ShotResult { Miss, Hit, Sink }
+
         public delegate void TurnEventHandler(bool myTurn);
         public delegate void OpponentShotEventHandler(int x, int y);
-        public delegate void MyShotEventHandler(bool hit);
+        public delegate void MyShotEventHandler(ShotResult result);
 
         public event TurnEventHandler OpponentFound;
         public event OpponentShotEventHandler OpponentShot;
@@ -26,7 +28,7 @@ namespace BattleshipsClient
 
         private void OnOpponentFound(bool myTurn) => OpponentFound?.Invoke(myTurn);
         private void OnOpponentShot(int x, int y) => OpponentShot?.Invoke(x, y);
-        private void OnMyShotReceived(bool hit) => MyShotReceived?.Invoke(hit);
+        private void OnMyShotReceived(ShotResult result) => MyShotReceived?.Invoke(result);
 
         public async Task ConnectAsync(IPAddress IP, string name)
         {
@@ -56,8 +58,9 @@ namespace BattleshipsClient
                 {
                     case "yourTurn": OnOpponentFound(true); break;
                     case "opponentsTurn": OnOpponentFound(false); break;
-                    case "youMissed": OnMyShotReceived(false); break;
-                    case "youHit": OnMyShotReceived(true); break;
+                    case "youMissed": OnMyShotReceived(ShotResult.Miss); break;
+                    case "youHit": OnMyShotReceived(ShotResult.Hit); break;
+                    case "youSank": OnMyShotReceived(ShotResult.Sink); break;
                     default: throw new NotImplementedException();
                 }
             }

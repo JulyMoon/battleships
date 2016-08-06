@@ -12,6 +12,8 @@ namespace BattleshipsClient
         private readonly Client client = new Client();
 
         private static readonly int[,] diagonalNeighbors = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } };
+        private static readonly int[,] adjacentNeighbors = { { 0, -1 }, { 1, 0 }, { -1, 0 }, { 0, 1 } };
+        private static readonly int[,] neighbors = { {-1, -1}, {1, -1}, {-1, 1}, {1, 1}, {0, -1}, {1, 0}, {-1, 0}, {0, 1} };
 
         private List<ShipProperties> myShipProps;
         private List<Ship> myShips;
@@ -71,7 +73,10 @@ namespace BattleshipsClient
             if (hit)
             {
                 myShips[index].IsAlive[segment] = false;
-                SetVerifiedEmptyCells(myVerifiedEmptyCells, x, y);
+                if (myShips[index].Dead)
+                    SetVerifiedEmptyCellsAroundSankShip(myShips[index]);
+                else
+                    SetVerifiedEmptyCells(myVerifiedEmptyCells, x, y);
             }
             else
             {
@@ -82,7 +87,67 @@ namespace BattleshipsClient
             OpponentShot?.Invoke(x, y);
         }
 
-        private static void SetVerifiedEmptyCells(bool[,] verifiedEmptyCells, int x, int y)
+        private void OnMyShotReceived(Client.ShotResult result)
+        {
+            enemyCells[LastShotX, LastShotY] = result == Client.ShotResult.Miss ? Cell.Empty : Cell.Ship;
+
+            switch (result)
+            {
+                case Client.ShotResult.Hit: SetVerifiedEmptyCells(enemyVerifiedEmptyCells, LastShotX, LastShotY); break;
+                case Client.ShotResult.Sink: SetVerifiedEmptyCellsAroundSankEnemyShip(LastShotX, LastShotY); break;
+                case Client.ShotResult.Miss: MyTurn = false; break;
+            }
+
+            MyShotReceived?.Invoke(result);
+        }
+
+        private void SetVerifiedEmptyCellsAroundSankShip(ShipProperties ship) // my board
+        {
+            var board = new bool[Game.BoardWidth, Game.BoardHeight];
+
+            for (int i = 0; i < ship.Size; i++)
+            {
+                int x, y;
+                if (ship.IsVertical)
+                {
+                    x = ship.X;
+                    y = ship.Y + i;
+                }
+                else
+                {
+                    x = ship.X + i;
+                    y = ship.Y;
+                }
+
+                board[x, y] = true;
+            }
+
+            for (int i = 0; i < ship.Size; i++)
+            {
+                int x, y;
+                if (ship.IsVertical)
+                {
+                    x = ship.X;
+                    y = ship.Y + i;
+                }
+                else
+                {
+                    x = ship.X + i;
+                    y = ship.Y;
+                }
+
+                for (int j = 0; j < 8; j++)
+                {
+                    int xx = x + neighbors[j, 0];
+                    int yy = y + neighbors[j, 1];
+
+                    if (Game.WithinBoard(xx, yy) && !board[xx, yy])
+                        myVerifiedEmptyCells[xx, yy] = true;
+                }
+            }
+        }
+
+        private static void SetVerifiedEmptyCells(bool[,] verifiedEmptyCells, int x, int y) // enemy board
         {
             for (int i = 0; i < 4; i++)
             {
@@ -93,18 +158,35 @@ namespace BattleshipsClient
             }
         }
 
-        private void OnMyShotReceived(bool hit)
+        private void SetVerifiedEmptyCellsAroundSankEnemyShip(int x, int y) // enemy board
         {
-            enemyCells[LastShotX, LastShotY] = hit ? Cell.Ship : Cell.Empty;
+            SetVerifiedEmptyCells(x, y);
 
-            if (hit)
+            for (int i = 0; i < 4; i++)
             {
-                SetVerifiedEmptyCells(enemyVerifiedEmptyCells, LastShotX, LastShotY);
+                int xx = x;
+                int yy = y;
+                while (true)
+                {
+                    xx += adjacentNeighbors[i, 0];
+                    yy += adjacentNeighbors[i, 1];
+                    if (Game.WithinBoard(xx, yy) && enemyCells[xx, yy] == Cell.Ship)
+                        SetVerifiedEmptyCells(xx, yy);
+                    else break;
+                }
             }
-            else
-                MyTurn = false;
+        }
 
-            MyShotReceived?.Invoke(hit);
+        private void SetVerifiedEmptyCells(int x, int y) // enemy board
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                int xx = x + neighbors[i, 0];
+                int yy = y + neighbors[i, 1];
+
+                if (Game.WithinBoard(xx, yy) && enemyCells[xx, yy] != Cell.Ship)
+                    enemyVerifiedEmptyCells[xx, yy] = true;
+            }
         }
 
         public void EnterMatchmaking(List<ShipProperties> shipPropArray)
