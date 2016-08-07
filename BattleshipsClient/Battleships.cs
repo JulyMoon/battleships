@@ -13,7 +13,7 @@ namespace BattleshipsClient
 
         private static readonly int[,] diagonalNeighbors = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } };
         private static readonly int[,] adjacentNeighbors = { { 0, -1 }, { 1, 0 }, { -1, 0 }, { 0, 1 } };
-        private static readonly int[,] neighbors = { {-1, -1}, {1, -1}, {-1, 1}, {1, 1}, {0, -1}, {1, 0}, {-1, 0}, {0, 1} };
+        private static readonly int[,] neighbors = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, { 0, 1 } };
 
         private List<ShipProperties> myShipProps;
         private List<Ship> myShips;

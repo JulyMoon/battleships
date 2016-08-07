@@ -9,7 +9,9 @@ namespace BattleshipsCommon
     {
         private static readonly Random random = new Random();
         private static readonly int[] shipSet = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
+
         private static readonly int[,] neighborsAndItselfPoints = { { -1, -1 }, { 0, -1 }, { 1, -1 }, { -1, 0 }, { 0, 0 }, { 1, 0 }, { -1, 1 }, { 0, 1 }, { 1, 1 } };
+
         public const int BoardWidth = 10;
         public const int BoardHeight = BoardWidth;
         public static ReadOnlyCollection<int> ShipSet => Array.AsReadOnly(shipSet);

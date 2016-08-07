@@ -28,8 +28,11 @@ namespace BattleshipsClient
         private const int turnIndicatorWidth = 5;
         private const int turnIndicatorAlpha = 120;
         private const int hoverPenWidth = 3;
-        private const int shipPenWidth = 3;
+        private const int shipPenWidth = 2;
+        private const int cellSideLineAdjust = 1;
         private const float emptyCellRatio = 1f / 6;
+
+        private static readonly int[,] adjacentNeighbors = { { 0, -1 }, { 1, 0 }, { -1, 0 }, { 0, 1 } };
 
         private const string myTurnString = "Your turn";
         private const string opponentsTurnString = "Opponent's turn";
@@ -348,6 +351,59 @@ namespace BattleshipsClient
                 }
         }
 
+        private void DrawShotEnemyShipCell(Graphics g, int x, int y)
+        {
+            g.DrawLine(shipDeadCrossPen, enemyBoardX + x * cellSize, enemyBoardY + y * cellSize, enemyBoardX + (x + 1) * cellSize, enemyBoardY + (y + 1) * cellSize);
+            g.DrawLine(shipDeadCrossPen, enemyBoardX + x * cellSize, enemyBoardY + (y + 1) * cellSize, enemyBoardX + (x + 1) * cellSize, enemyBoardY + y * cellSize);
+
+            for (int i = 0; i < 4; i++)
+            {
+                int ax = adjacentNeighbors[i, 0];
+                int ay = adjacentNeighbors[i, 1];
+                int xx = x + ax;
+                int yy = y + ay;
+
+                if (Game.WithinBoard(xx, yy) && !game.GetEnemyVerifiedEmptyCell(xx, yy) && game.GetEnemyCell(xx, yy) != Battleships.Cell.Empty)
+                    continue;
+
+                xx = enemyBoardX + x * cellSize;
+                yy = enemyBoardY + y * cellSize;
+
+                int x1, y1, x2, y2;
+
+                if (ax == 0 && ay == -1) // up
+                {
+                    x1 = xx - cellSideLineAdjust;
+                    y1 = yy;
+                    x2 = x1 + cellSize + cellSideLineAdjust;
+                    y2 = y1;
+                }
+                else if (ax == 1 && ay == 0) // right
+                {
+                    x1 = xx + cellSize;
+                    y1 = yy - cellSideLineAdjust;
+                    x2 = x1;
+                    y2 = y1 + cellSize + cellSideLineAdjust;
+                }
+                else if (ax == 0 && ay == 1) // down
+                {
+                    x1 = xx - cellSideLineAdjust;
+                    y1 = yy + cellSize;
+                    x2 = x1 + cellSize + cellSideLineAdjust;
+                    y2 = y1;
+                }
+                else // left
+                {
+                    x1 = xx;
+                    y1 = yy - cellSideLineAdjust;
+                    x2 = x1;
+                    y2 = y1 + cellSize + cellSideLineAdjust;
+                }
+
+                g.DrawLine(shipDeadPen, x1, y1, x2, y2);
+            }
+        }
+
         private void DrawEnemyBoardCells(Graphics g)
         {
             for (int x = 0; x < Game.BoardWidth; x++)
@@ -355,11 +411,7 @@ namespace BattleshipsClient
                 {
                     switch (game.GetEnemyCell(x, y))
                     {
-                        case Battleships.Cell.Ship:
-                            g.DrawLine(shipDeadCrossPen, enemyBoardX + x * cellSize, enemyBoardY + y * cellSize, enemyBoardX + (x + 1) * cellSize, enemyBoardY + (y + 1) * cellSize);
-                            g.DrawLine(shipDeadCrossPen, enemyBoardX + x * cellSize, enemyBoardY + (y + 1) * cellSize, enemyBoardX + (x + 1) * cellSize, enemyBoardY + y * cellSize);
-                            break;
-
+                        case Battleships.Cell.Ship: DrawShotEnemyShipCell(g, x, y); break;
                         case Battleships.Cell.Empty: DrawEmptyCell(g, true, x, y, enemyBoardX, enemyBoardY); break;
                         case Battleships.Cell.Unknown: if (game.GetEnemyVerifiedEmptyCell(x, y)) DrawEmptyCell(g, false, x, y, enemyBoardX, enemyBoardY); break;
                     }
