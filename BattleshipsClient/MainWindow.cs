@@ -39,8 +39,8 @@ namespace BattleshipsClient
         
         private static readonly Pen boardPen = new Pen(Color.FromArgb(180, 180, 255));
         private static readonly Brush boardTextBrush = Brushes.Black;
-        private static readonly Pen shipEditablePen = new Pen(Color.FromArgb(110, 120, 240), shipPenWidth);
-        private static readonly Pen shipPen = new Pen(Color.DodgerBlue, shipPenWidth);
+        private static readonly Pen shipEditablePen = new Pen(Color.DarkSlateBlue, shipPenWidth);
+        private static readonly Pen shipPen = new Pen(Color.Blue, shipPenWidth);
         private static readonly Pen shipSnapPen = new Pen(Color.ForestGreen, shipPenWidth);
         private static readonly Pen shipDeadPen = new Pen(Color.Red, shipPenWidth);
         private static readonly Pen shipDeadCrossPen = new Pen(shipDeadPen.Color, 2);
@@ -57,6 +57,8 @@ namespace BattleshipsClient
         private readonly List<Tuple<ShipProperties, bool>> currentShips = new List<Tuple<ShipProperties, bool>>();
         private readonly List<Tuple<ShipProperties, bool>> setShips = new List<Tuple<ShipProperties, bool>>();
                                                   // ^ this bool represents whether the ship was used or not
+
+        private Graphics g;
 
         private bool draggingSetShip;
         private int dragIndex;
@@ -80,10 +82,7 @@ namespace BattleshipsClient
 
         private readonly Control[] controlGroup;
 
-        private enum Stage
-        {
-            Placement, Matchmaking, Playing, Postgame
-        }
+        private enum Stage { Placement, Matchmaking, Playing, Postgame }
 
         private Stage stage = Stage.Placement;
 
@@ -157,10 +156,6 @@ namespace BattleshipsClient
             }
         }
 
-        private void MainWindow_Load(object sender, EventArgs e) { }
-
-        private void MainWindow_Shown(object sender, EventArgs e) { }
-
         private void AdoptShipSet(ReadOnlyCollection<int> shipSet)
         {
             setShips.Clear();
@@ -204,13 +199,13 @@ namespace BattleshipsClient
             return new Rectangle(shipProps.X, shipProps.Y, shipWidth, shipHeight);
         }
 
-        private static void DrawAbsoluteShip(Graphics g, Pen pen, ShipProperties shipProps)
+        private void DrawAbsoluteShip(Pen pen, ShipProperties shipProps)
             => g.DrawRectangle(pen, GetShipRectangle(shipProps));
 
-        private static void DrawBoardShip(Graphics g, Pen pen, ShipProperties ship, int boardx, int boardy)
-            => DrawAbsoluteShip(g, pen, new ShipProperties(ship.Size, ship.IsVertical, boardx + ship.X * cellSize, boardy + ship.Y * cellSize));
+        private void DrawBoardShip(Pen pen, ShipProperties ship, int boardx, int boardy)
+            => DrawAbsoluteShip(pen, new ShipProperties(ship.Size, ship.IsVertical, boardx + ship.X * cellSize, boardy + ship.Y * cellSize));
 
-        private static void DrawBoardShip(Graphics g, Pen pen, Ship ship, int boardx, int boardy)
+        private void DrawBoardShip(Pen pen, Ship ship, int boardx, int boardy)
         {
             for (int i = 0; i < ship.Size; i++)
             {
@@ -236,10 +231,10 @@ namespace BattleshipsClient
                 g.DrawLine(shipDeadCrossPen, x, y + cellSize, x + cellSize, y);
             }
 
-            DrawAbsoluteShip(g, ship.Dead ? shipDeadPen : pen, new ShipProperties(ship.Size, ship.IsVertical, boardx + ship.X * cellSize, boardy + ship.Y * cellSize));
+            DrawAbsoluteShip(ship.Dead ? shipDeadPen : pen, new ShipProperties(ship.Size, ship.IsVertical, boardx + ship.X * cellSize, boardy + ship.Y * cellSize));
         }
 
-        private static void DrawBoard(Graphics g, int boardx, int boardy)
+        private void DrawBoard(int boardx, int boardy)
         {
             for (int i = 0; i <= boardWidth; i++)
             {
@@ -258,38 +253,38 @@ namespace BattleshipsClient
 
             for (int i = 0; i < boardHeight; i++)
             {
-                var number = (i + 1).ToString();
+                string number = (i + 1).ToString();
                 g.DrawString(number, boardFont, boardTextBrush, boardx - cellSize + (number.Length == 1 ? 4 : 0), boardy + i * cellSize + 4);
             }
         }
 
-        private static void DrawShipWindow(Graphics g, Pen pen, int x, int y, int width, int height) => g.DrawRectangle(pen, x, y, width, height);
+        private void DrawShipWindow(Pen pen, int x, int y, int width, int height) => g.DrawRectangle(pen, x, y, width, height);
 
-        private static void DrawBoardShips(Graphics g, Pen pen, IEnumerable<ShipProperties> ships, int boardx, int boardy)
+        private void DrawBoardShips(Pen pen, IEnumerable<ShipProperties> ships, int boardx, int boardy)
         {
             foreach (var ship in ships)
-                DrawBoardShip(g, pen, ship, boardx, boardy);
+                DrawBoardShip(pen, ship, boardx, boardy);
         }
 
-        private static void DrawBoardShips(Graphics g, Pen pen, IEnumerable<Ship> ships, int boardx, int boardy)
+        private void DrawBoardShips(Pen pen, IEnumerable<Ship> ships, int boardx, int boardy)
         {
             foreach (var ship in ships)
-                DrawBoardShip(g, pen, ship, boardx, boardy);
+                DrawBoardShip(pen, ship, boardx, boardy);
         }
 
-        private static void DrawAbsoluteShips(Graphics g, Pen pen, IEnumerable<ShipProperties> ships)
+        private void DrawAbsoluteShips(Pen pen, IEnumerable<ShipProperties> ships)
         {
             foreach (var ship in ships)
-                DrawAbsoluteShip(g, pen, ship);
+                DrawAbsoluteShip(pen, ship);
         }
 
-        private void DrawPlacementStage(PaintEventArgs e)
+        private void DrawPlacementStage()
         {
-            DrawBoard(e.Graphics, myBoardX, myBoardY);
-            DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
+            DrawBoard(myBoardX, myBoardY);
+            DrawShipWindow(shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
-            DrawBoardShips(e.Graphics, shipEditablePen, GetNotUsedShips(currentShips), myBoardX, myBoardY);
-            DrawAbsoluteShips(e.Graphics, shipEditablePen, GetNotUsedShips(setShips));
+            DrawBoardShips(shipEditablePen, GetNotUsedShips(currentShips), myBoardX, myBoardY);
+            DrawAbsoluteShips(shipEditablePen, GetNotUsedShips(setShips));
 
             if (!dragging)
                 return;
@@ -307,10 +302,10 @@ namespace BattleshipsClient
                 dragy = mousePosition.Y - dragOffsetY;
             }
 
-            DrawAbsoluteShip(e.Graphics, snapping ? shipSnapPen : shipEditablePen, new ShipProperties(drag.Size, drag.IsVertical, dragx, dragy));
+            DrawAbsoluteShip(snapping ? shipSnapPen : shipEditablePen, new ShipProperties(drag.Size, drag.IsVertical, dragx, dragy));
         }
 
-        private void DrawPlayingStage(PaintEventArgs e)
+        private void DrawPlayingStage()
         {
             int boardx, boardy;
             if (game.MyTurn)
@@ -323,35 +318,35 @@ namespace BattleshipsClient
                 boardx = myBoardX;
                 boardy = myBoardY;
             }
-            DrawTurnIndicator(e.Graphics, game.MyTurn ? myTurnPen : enemyTurnPen, boardx, boardy);
+            DrawTurnIndicator(game.MyTurn ? myTurnPen : enemyTurnPen, boardx, boardy);
 
-            DrawBoard(e.Graphics, myBoardX, myBoardY);
-            DrawBoardShips(e.Graphics, shipPen, game.MyShips, myBoardX, myBoardY);
-            DrawMyMissCells(e.Graphics);
+            DrawBoard(myBoardX, myBoardY);
+            DrawBoardShips(shipPen, game.MyShips, myBoardX, myBoardY);
+            DrawMyMissCells();
             
-            DrawBoard(e.Graphics, enemyBoardX, enemyBoardY);
-            DrawEnemyBoardCells(e.Graphics);
+            DrawBoard(enemyBoardX, enemyBoardY);
+            DrawEnemyBoardCells();
 
             if (hovering)
-                DrawHoverIndicator(e.Graphics);
+                DrawHoverIndicator();
         }
 
-        private void DrawHoverIndicator(Graphics g)
+        private void DrawHoverIndicator()
             => g.DrawRectangle(canShoot ? hoverPen : hoverDisabledPen, enemyBoardX + hoverX * cellSize, enemyBoardY + hoverY * cellSize, cellSize, cellSize);
 
-        private void DrawMyMissCells(Graphics g)
+        private void DrawMyMissCells()
         {
             for (int x = 0; x < Game.BoardWidth; x++)
                 for (int y = 0; y < Game.BoardHeight; y++)
                 {
                     if (game.GetMyMissCell(x, y))
-                        DrawEmptyCell(g, true, x, y, myBoardX, myBoardY);
+                        DrawEmptyCell(true, x, y, myBoardX, myBoardY);
                     else if (game.GetMyVerifiedEmptyCell(x, y))
-                        DrawEmptyCell(g, false, x, y, myBoardX, myBoardY);
+                        DrawEmptyCell(false, x, y, myBoardX, myBoardY);
                 }
         }
 
-        private void DrawShotEnemyShipCell(Graphics g, int x, int y)
+        private void DrawShotEnemyShipCell(int x, int y)
         {
             g.DrawLine(shipDeadCrossPen, enemyBoardX + x * cellSize, enemyBoardY + y * cellSize, enemyBoardX + (x + 1) * cellSize, enemyBoardY + (y + 1) * cellSize);
             g.DrawLine(shipDeadCrossPen, enemyBoardX + x * cellSize, enemyBoardY + (y + 1) * cellSize, enemyBoardX + (x + 1) * cellSize, enemyBoardY + y * cellSize);
@@ -404,44 +399,46 @@ namespace BattleshipsClient
             }
         }
 
-        private void DrawEnemyBoardCells(Graphics g)
+        private void DrawEnemyBoardCells()
         {
             for (int x = 0; x < Game.BoardWidth; x++)
                 for (int y = 0; y < Game.BoardHeight; y++)
                 {
                     switch (game.GetEnemyCell(x, y))
                     {
-                        case Battleships.Cell.Ship: DrawShotEnemyShipCell(g, x, y); break;
-                        case Battleships.Cell.Empty: DrawEmptyCell(g, true, x, y, enemyBoardX, enemyBoardY); break;
-                        case Battleships.Cell.Unknown: if (game.GetEnemyVerifiedEmptyCell(x, y)) DrawEmptyCell(g, false, x, y, enemyBoardX, enemyBoardY); break;
+                        case Battleships.Cell.Ship: DrawShotEnemyShipCell(x, y); break;
+                        case Battleships.Cell.Empty: DrawEmptyCell(true, x, y, enemyBoardX, enemyBoardY); break;
+                        case Battleships.Cell.Unknown: if (game.GetEnemyVerifiedEmptyCell(x, y)) DrawEmptyCell(false, x, y, enemyBoardX, enemyBoardY); break;
                     }
                 }
         }
 
-        private static void DrawEmptyCell(Graphics g, bool real, int x, int y, int boardx, int boardy)
+        private void DrawEmptyCell(bool real, int x, int y, int boardx, int boardy)
         {
             const float add = (1 - emptyCellRatio) / 2;
             g.FillEllipse(real ? emptyBrush : verifiedEmptyBrush, boardx + (x + add) * cellSize, boardy + (y + add) * cellSize, emptyCellRatio * cellSize, emptyCellRatio * cellSize);
         }
 
-        private static void DrawTurnIndicator(Graphics g, Pen pen, int boardx, int boardy)
+        private void DrawTurnIndicator(Pen pen, int boardx, int boardy)
             => g.DrawRectangle(pen, boardx - turnIndicatorPadding, boardy - turnIndicatorPadding, boardWidth * cellSize + turnIndicatorPadding * 2, boardHeight * cellSize + turnIndicatorPadding * 2);
 
-        private void DrawMatchmakingStage(PaintEventArgs e)
+        private void DrawMatchmakingStage()
         {
-            DrawBoard(e.Graphics, myBoardX, myBoardY);
-            DrawShipWindow(e.Graphics, shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
+            DrawBoard(myBoardX, myBoardY);
+            DrawShipWindow(shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
 
-            DrawBoardShips(e.Graphics, shipPen, game.MyShipProps, myBoardX, myBoardY);
+            DrawBoardShips(shipPen, game.MyShipProps, myBoardX, myBoardY);
         }
 
         private void MainWindow_Paint(object sender, PaintEventArgs e)
         {
+            g = e.Graphics;
+
             switch (stage)
             {
-                case Stage.Placement: DrawPlacementStage(e); break;
-                case Stage.Matchmaking: DrawMatchmakingStage(e); break;
-                case Stage.Playing: DrawPlayingStage(e); break;
+                case Stage.Placement: DrawPlacementStage(); break;
+                case Stage.Matchmaking: DrawMatchmakingStage(); break;
+                case Stage.Playing: DrawPlayingStage(); break;
                 case Stage.Postgame: throw new NotImplementedException();
                 default: throw new Exception();
             }

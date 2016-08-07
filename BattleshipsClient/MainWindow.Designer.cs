@@ -92,8 +92,6 @@
             this.Name = "MainWindow";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Battleships";
-            this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.Shown += new System.EventHandler(this.MainWindow_Shown);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.MainWindow_Paint);
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.MainWindow_MouseDown);
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MainWindow_MouseMove);
