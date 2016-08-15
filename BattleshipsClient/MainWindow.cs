@@ -39,7 +39,7 @@ namespace BattleshipsClient
         
         private static readonly Pen boardPen = new Pen(Color.FromArgb(180, 180, 255));
         private static readonly Brush boardTextBrush = Brushes.Black;
-        private static readonly Pen shipEditablePen = new Pen(Color.DarkSlateBlue, shipPenWidth);
+        private static readonly Pen shipEditablePen = new Pen(Color.CornflowerBlue, shipPenWidth);
         private static readonly Pen shipPen = new Pen(Color.Blue, shipPenWidth);
         private static readonly Pen shipSnapPen = new Pen(Color.ForestGreen, shipPenWidth);
         private static readonly Pen shipDeadPen = new Pen(Color.Red, shipPenWidth);
@@ -105,7 +105,7 @@ namespace BattleshipsClient
         {
             RunOnUIThread(() =>
             {
-                statusLabel.Text = game.MyTurn ? myTurnString : opponentsTurnString;
+                UpdateStatusLabel();
                 stage = Stage.Playing;
 
                 foreach (var control in controlGroup)
@@ -117,25 +117,38 @@ namespace BattleshipsClient
 
         private void OnOpponentShot()
         {
-            if (game.GameOver && !game.Won)
+            RunOnUIThread(() =>
             {
-                MessageBox.Show("You lost");
-                stage = Stage.Postgame;
-            }
+                if (game.GameOver)
+                {
+                    statusLabel.Text = "You lost";
+                    stage = Stage.Postgame;
+                }
+                else
+                    UpdateStatusLabel();
 
-            Invalidate();
+                Invalidate();
+            });
         }
 
         private void OnMyShotReceived()
         {
-            if (game.GameOver && game.Won)
+            RunOnUIThread(() =>
             {
-                MessageBox.Show("You won");
-                stage = Stage.Postgame;
-            }
+                if (game.GameOver)
+                {
+                    statusLabel.Text = "You won";
+                    stage = Stage.Postgame;
+                }
+                else
+                    UpdateStatusLabel();
 
-            Invalidate();
+                Invalidate();
+            });
         }
+
+        private void UpdateStatusLabel()
+            => statusLabel.Text = game.MyTurn ? myTurnString : opponentsTurnString;
 
         private void RunOnUIThread(Action action)
         {
