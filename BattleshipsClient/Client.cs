@@ -56,11 +56,11 @@ namespace BattleshipsClient
             {
                 switch (traffic)
                 {
-                    case "yourTurn": OnOpponentFound(true); break;
-                    case "opponentsTurn": OnOpponentFound(false); break;
-                    case "youMissed": OnMyShotReceived(ShotResult.Miss); break;
-                    case "youHit": OnMyShotReceived(ShotResult.Hit); break;
-                    case "youSank": OnMyShotReceived(ShotResult.Sink); break;
+                    case Game.YourTurnString: OnOpponentFound(true); break;
+                    case Game.OpponentsTurnString: OnOpponentFound(false); break;
+                    case Game.YouMissedString: OnMyShotReceived(ShotResult.Miss); break;
+                    case Game.YouHitString: OnMyShotReceived(ShotResult.Hit); break;
+                    case Game.YouSankString: OnMyShotReceived(ShotResult.Sink); break;
                     default: throw new NotImplementedException();
                 }
             }
@@ -69,8 +69,7 @@ namespace BattleshipsClient
                 string header = traffic.Substring(0, delimiterIndex);
                 string data = traffic.Substring(delimiterIndex + 1);
 
-                const string opponentShotString = "opponentShot";
-                if (header == opponentShotString)
+                if (header == Game.OpponentShotString)
                 {
                     var split = data.Split('\'');
                     int x = Int32.Parse(split[0]);

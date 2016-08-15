@@ -16,6 +16,13 @@ namespace BattleshipsCommon
         public const int BoardHeight = BoardWidth;
         public static ReadOnlyCollection<int> ShipSet => Array.AsReadOnly(shipSet);
 
+        public const string YourTurnString = "yourTurn";
+        public const string OpponentsTurnString = "opponentsTurn";
+        public const string YouMissedString = "youMissed";
+        public const string YouHitString = "youHit";
+        public const string YouSankString = "youSank";
+        public const string OpponentShotString = "opponentShot";
+
         public static void GetShipDimensions(bool vertical, int size, out int shipW, out int shipH)
         {
             if (vertical)
