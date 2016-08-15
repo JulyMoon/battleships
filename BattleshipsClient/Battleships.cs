@@ -27,11 +27,14 @@ namespace BattleshipsClient
         public int LastShotX { get; private set; }
         public int LastShotY { get; private set; }
 
-        public delegate void OpponentFoundEventHandler();
+        public bool GameOver { get; private set; }
+        public bool Won { get; private set; }
 
-        public event OpponentFoundEventHandler OpponentFound;
-        public event Client.OpponentShotEventHandler OpponentShot;
-        public event Client.MyShotEventHandler MyShotReceived;
+        public delegate void SimpleEventHandler();
+
+        public event SimpleEventHandler OpponentFound;
+        public event SimpleEventHandler OpponentShot;
+        public event SimpleEventHandler MyShotReceived;
 
         public enum Cell { Unknown, Ship, Empty }
 
@@ -84,7 +87,13 @@ namespace BattleshipsClient
                 MyTurn = true;
             }
 
-            OpponentShot?.Invoke(x, y);
+            if (myShips.All(ship => ship.Dead))
+            {
+                GameOver = true;
+                Won = false;
+            }
+
+            OpponentShot?.Invoke();
         }
 
         private void OnMyShotReceived(Client.ShotResult result)
@@ -98,7 +107,19 @@ namespace BattleshipsClient
                 case Client.ShotResult.Miss: MyTurn = false; break;
             }
 
-            MyShotReceived?.Invoke(result);
+            int deadEnemyCells = 0;
+            for (int x = 0; x < Game.BoardWidth; x++)
+                for (int y = 0; y < Game.BoardHeight; y++)
+                    if (enemyCells[x, y] == Cell.Ship)
+                        deadEnemyCells++;
+
+            if (deadEnemyCells == Game.ShipSet.Sum())
+            {
+                GameOver = true;
+                Won = true;
+            }
+
+            MyShotReceived?.Invoke();
         }
 
         private void SetVerifiedEmptyCellsAroundSankShip(ShipProperties ship) // my board

@@ -115,13 +115,25 @@ namespace BattleshipsClient
             });
         }
 
-        private void OnOpponentShot(int x, int y)
+        private void OnOpponentShot()
         {
+            if (game.GameOver && !game.Won)
+            {
+                MessageBox.Show("You lost");
+                stage = Stage.Postgame;
+            }
+
             Invalidate();
         }
 
-        private void OnMyShotReceived(Client.ShotResult result)
+        private void OnMyShotReceived()
         {
+            if (game.GameOver && game.Won)
+            {
+                MessageBox.Show("You won");
+                stage = Stage.Postgame;
+            }
+
             Invalidate();
         }
 
@@ -331,6 +343,16 @@ namespace BattleshipsClient
                 DrawHoverIndicator();
         }
 
+        private void DrawPostgameStage()
+        {
+            DrawBoard(myBoardX, myBoardY);
+            DrawBoardShips(shipPen, game.MyShips, myBoardX, myBoardY);
+            DrawMyMissCells();
+
+            DrawBoard(enemyBoardX, enemyBoardY);
+            DrawEnemyBoardCells();
+        }
+
         private void DrawHoverIndicator()
             => g.DrawRectangle(canShoot ? hoverPen : hoverDisabledPen, enemyBoardX + hoverX * cellSize, enemyBoardY + hoverY * cellSize, cellSize, cellSize);
 
@@ -439,8 +461,7 @@ namespace BattleshipsClient
                 case Stage.Placement: DrawPlacementStage(); break;
                 case Stage.Matchmaking: DrawMatchmakingStage(); break;
                 case Stage.Playing: DrawPlayingStage(); break;
-                case Stage.Postgame: throw new NotImplementedException();
-                default: throw new Exception();
+                case Stage.Postgame: DrawPostgameStage(); break;
             }
         }
 
