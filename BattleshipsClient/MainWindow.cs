@@ -101,51 +101,35 @@ namespace BattleshipsClient
             game.MyShotReceived += OnMyShotReceived;
         }
 
-        private void OnOpponentFound()
+        private void SwitchToPlayingStage()
         {
-            RunOnUIThread(() =>
+            stage = Stage.Playing;
+            UpdateStatusLabel();
+
+            foreach (var control in controlGroup)
+                control.Visible = false;
+
+            Invalidate();
+        }
+
+        private void HandleShot()
+        {
+            if (game.GameOver)
             {
+                statusLabel.Text = $"You {(game.Won ? "won" : "lost")}";
+                stage = Stage.Postgame;
+            }
+            else
                 UpdateStatusLabel();
-                stage = Stage.Playing;
 
-                foreach (var control in controlGroup)
-                    control.Visible = false;
-
-                Invalidate();
-            });
+            Invalidate();
         }
 
-        private void OnOpponentShot()
-        {
-            RunOnUIThread(() =>
-            {
-                if (game.GameOver)
-                {
-                    statusLabel.Text = "You lost";
-                    stage = Stage.Postgame;
-                }
-                else
-                    UpdateStatusLabel();
+        private void OnOpponentFound() => RunOnUIThread(SwitchToPlayingStage);
 
-                Invalidate();
-            });
-        }
+        private void OnOpponentShot() => RunOnUIThread(HandleShot);
 
-        private void OnMyShotReceived()
-        {
-            RunOnUIThread(() =>
-            {
-                if (game.GameOver)
-                {
-                    statusLabel.Text = "You won";
-                    stage = Stage.Postgame;
-                }
-                else
-                    UpdateStatusLabel();
-
-                Invalidate();
-            });
-        }
+        private void OnMyShotReceived() => RunOnUIThread(HandleShot);
 
         private void UpdateStatusLabel()
             => statusLabel.Text = game.MyTurn ? myTurnString : opponentsTurnString;
