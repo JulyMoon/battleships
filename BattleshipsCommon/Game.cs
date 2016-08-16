@@ -23,6 +23,11 @@ namespace BattleshipsCommon
         public const string YouSankString = "youSank";
         public const string OpponentShotString = "opponentShot";
 
+        public const string NameString = "name";
+        public const string EnterString = "enter";
+        public const string LeaveString = "leave";
+        public const string ShootString = "shoot";
+
         public static void GetShipDimensions(bool vertical, int size, out int shipW, out int shipH)
         {
             if (vertical)

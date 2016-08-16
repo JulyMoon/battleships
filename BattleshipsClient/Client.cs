@@ -82,15 +82,15 @@ namespace BattleshipsClient
             }
         }
 
-        public void Shoot(int x, int y) => Send($"shoot:{x}'{y}");
+        public void Shoot(int x, int y) => Send($"{Game.ShootString}:{x}'{y}");
 
-        public void EnterMatchmaking(IEnumerable<ShipProperties> shipPropArray) => Send($"enter:{SerializeShips(shipPropArray)}");
+        public void EnterMatchmaking(IEnumerable<ShipProperties> shipPropArray) => Send($"{Game.EnterString}:{SerializeShips(shipPropArray)}");
 
         private static string SerializeShips(IEnumerable<ShipProperties> shipPropArray)
             => shipPropArray.Aggregate("", (current, ship) => $"{current}|{ship.Serialize()}").Substring(1);
 
         private void Send(string text) => writer.Write(text);
 
-        private void SendName(string name) => Send($"name:{name}");
+        private void SendName(string name) => Send($"{Game.NameString}:{name}");
     }
 }
