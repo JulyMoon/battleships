@@ -36,6 +36,7 @@ namespace BattleshipsClient
 
         private const string myTurnString = "Your turn";
         private const string opponentsTurnString = "Opponent's turn";
+        private const string placeString = "Place the ships";
         
         private static readonly Pen boardPen = new Pen(Color.FromArgb(180, 180, 255));
         private static readonly Brush boardTextBrush = Brushes.Black;
@@ -47,6 +48,9 @@ namespace BattleshipsClient
         private static readonly Pen shipWindowPen = boardPen;
         private static readonly Pen myTurnPen = new Pen(Color.FromArgb(turnIndicatorAlpha, Color.LimeGreen), turnIndicatorWidth);
         private static readonly Pen enemyTurnPen = new Pen(Color.FromArgb(turnIndicatorAlpha, Color.Red), turnIndicatorWidth);
+        private static readonly Color winColor = Color.FromArgb(120, Color.LimeGreen);
+        private static readonly Color loseColor = Color.FromArgb(120, Color.Red);
+        private static readonly Color neutralStatusColor = Color.Transparent;
         private static readonly Pen hoverPen = new Pen(Color.MediumSeaGreen, hoverPenWidth);
         private static readonly Pen hoverDisabledPen = new Pen(Color.DarkGray, hoverPenWidth);
         private static readonly Brush emptyBrush = new SolidBrush(Color.DimGray);
@@ -80,7 +84,7 @@ namespace BattleshipsClient
         private bool canShoot => game.MyTurn && game.GetEnemyCell(hoverX, hoverY) == Battleships.Cell.Unknown
             && !game.GetEnemyVerifiedEmptyCell(hoverX, hoverY);
 
-        private readonly Control[] controlGroup;
+        private readonly Control[] placementControls;
 
         private enum Stage { Placement, Matchmaking, Playing, Postgame }
 
@@ -92,9 +96,12 @@ namespace BattleshipsClient
 
             AdoptShipSet(Game.ShipSet);
 
-            controlGroup = new Control[] {randomButton, playButton};
-            CenterControls(new Rectangle(shipWindowX, shipWindowY + shipWindowHeight, shipWindowWidth, boardHeight * cellSize - shipWindowHeight), controlGroup);
+            placementControls = new Control[] {randomButton, playButton};
+            CenterControls(new Rectangle(shipWindowX, shipWindowY + shipWindowHeight, shipWindowWidth, boardHeight * cellSize - shipWindowHeight), placementControls);
             CenterControls(new Rectangle(0, myBoardY + boardHeight * cellSize, ClientSize.Width, ClientSize.Height - (myBoardY + boardHeight * cellSize)), statusLabel);
+            CenterControls(new Rectangle(ClientSize.Width / 2, myBoardY + boardHeight * cellSize, ClientSize.Width / 2, ClientSize.Height - (myBoardY + boardHeight * cellSize)), continueButton);
+
+            ResetStatus();
 
             game.OpponentFound += OnOpponentFound;
             game.OpponentShot += OnOpponentShot;
@@ -103,24 +110,40 @@ namespace BattleshipsClient
 
         private void SwitchToPlayingStage()
         {
+            UpdateStatus();
+
+            TogglePlacementControlVisibility(false);
+
             stage = Stage.Playing;
-            UpdateStatusLabel();
+            Invalidate();
+        }
 
-            foreach (var control in controlGroup)
-                control.Visible = false;
+        private void SwitchToPostgameStage()
+        {
+            statusLabel.Text = $"You {(game.Won ? "won" : "lost")}";
+            statusLabel.BackColor = game.Won ? winColor : loseColor;
+            continueButton.Visible = true;
+            stage = Stage.Postgame;
+        }
 
+        private void SwitchToPlacementStage()
+        {
+            ResetStatus();
+            TogglePlacementControlAvailability(true);
+            TogglePlacementControlVisibility(true);
+            continueButton.Visible = false;
+            game.NewGame();
+
+            stage = Stage.Placement;
             Invalidate();
         }
 
         private void HandleShot()
         {
             if (game.GameOver)
-            {
-                statusLabel.Text = $"You {(game.Won ? "won" : "lost")}";
-                stage = Stage.Postgame;
-            }
+                SwitchToPostgameStage();
             else
-                UpdateStatusLabel();
+                UpdateStatus();
 
             Invalidate();
         }
@@ -131,8 +154,26 @@ namespace BattleshipsClient
 
         private void OnMyShotReceived() => RunOnUIThread(HandleShot);
 
-        private void UpdateStatusLabel()
+        private void UpdateStatus()
             => statusLabel.Text = game.MyTurn ? myTurnString : opponentsTurnString;
+
+        private void TogglePlacementControlVisibility(bool visible)
+        {
+            foreach (var control in placementControls)
+                control.Visible = visible;
+        }
+
+        private void TogglePlacementControlAvailability(bool enabled)
+        {
+            foreach (var control in placementControls)
+                control.Enabled = enabled;
+        }
+
+        private void ResetStatus()
+        {
+            statusLabel.Text = placeString;
+            statusLabel.BackColor = neutralStatusColor;
+        }
 
         private void RunOnUIThread(Action action)
         {
@@ -618,17 +659,18 @@ namespace BattleshipsClient
 
         private async void playButton_Click(object sender, EventArgs e)
         {
-            playButton.Enabled = false;
-            randomButton.Enabled = false;
-            nameTextBox.Enabled = false;
-            statusLabel.Text = "Connecting to the server...";
-            
-            await game.ConnectAsync(IPAddress.Loopback, "foxneZz");
+            TogglePlacementControlAvailability(false);
+
+            if (!game.ConnectedToServer)
+            {
+                statusLabel.Text = "Connecting to the server...";
+                await game.ConnectAsync(IPAddress.Loopback, "foxneZz");
+            }
             
             game.EnterMatchmaking(currentShips.Select(tuple => tuple.Item1).ToList());
-            stage = Stage.Matchmaking;
-
             statusLabel.Text = "Waiting for opponent...";
+
+            stage = Stage.Matchmaking;
             Invalidate();
         }
 
@@ -646,5 +688,7 @@ namespace BattleshipsClient
 
             Invalidate();
         }
+
+        private void continueButton_Click(object sender, EventArgs e) => SwitchToPlacementStage();
     }
 }

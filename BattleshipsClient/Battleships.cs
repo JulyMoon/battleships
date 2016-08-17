@@ -46,8 +46,23 @@ namespace BattleshipsClient
         public ReadOnlyCollection<ShipProperties> MyShipProps => myShipProps.AsReadOnly();
         public ReadOnlyCollection<Ship> MyShips => myShips.AsReadOnly();
 
+        public bool ConnectedToServer => client.Connected;
+
         public Battleships()
         {
+            client.OpponentFound += OnOpponentFound;
+            client.OpponentShot += OnOpponentShot;
+            client.MyShotReceived += OnMyShotReceived;
+
+            NewGame();
+        }
+
+        public void NewGame()
+        {
+            GameOver = false;
+            myShipProps = null;
+            myShips = null;
+
             for (int x = 0; x < Game.BoardWidth; x++)
                 for (int y = 0; y < Game.BoardHeight; y++)
                 {
@@ -56,10 +71,6 @@ namespace BattleshipsClient
                     myVerifiedEmptyCells[x, y] = false;
                     myMissCells[x, y] = false;
                 }
-
-            client.OpponentFound += OnOpponentFound;
-            client.OpponentShot += OnOpponentShot;
-            client.MyShotReceived += OnMyShotReceived;
         }
 
         private void OnOpponentFound(bool myTurn)

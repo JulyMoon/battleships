@@ -30,6 +30,8 @@ namespace BattleshipsClient
         private void OnOpponentShot(int x, int y) => OpponentShot?.Invoke(x, y);
         private void OnMyShotReceived(ShotResult result) => MyShotReceived?.Invoke(result);
 
+        public bool Connected => client.Connected;
+
         public async Task ConnectAsync(IPAddress IP, string name)
         {
             await client.ConnectAsync(IP, port);

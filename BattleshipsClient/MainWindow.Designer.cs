@@ -32,6 +32,7 @@
             this.playButton = new System.Windows.Forms.Button();
             this.statusLabel = new System.Windows.Forms.Label();
             this.randomButton = new System.Windows.Forms.Button();
+            this.continueButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // nameTextBox
@@ -76,12 +77,24 @@
             this.randomButton.UseVisualStyleBackColor = true;
             this.randomButton.Click += new System.EventHandler(this.randomButton_Click);
             // 
+            // continueButton
+            // 
+            this.continueButton.Location = new System.Drawing.Point(12, 111);
+            this.continueButton.Name = "continueButton";
+            this.continueButton.Size = new System.Drawing.Size(88, 29);
+            this.continueButton.TabIndex = 6;
+            this.continueButton.Text = "Continue";
+            this.continueButton.UseVisualStyleBackColor = true;
+            this.continueButton.Visible = false;
+            this.continueButton.Click += new System.EventHandler(this.continueButton_Click);
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(669, 350);
+            this.Controls.Add(this.continueButton);
             this.Controls.Add(this.randomButton);
             this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.playButton);
@@ -107,6 +120,7 @@
         private System.Windows.Forms.Button playButton;
         private System.Windows.Forms.Label statusLabel;
         private System.Windows.Forms.Button randomButton;
+        private System.Windows.Forms.Button continueButton;
     }
 }
 
