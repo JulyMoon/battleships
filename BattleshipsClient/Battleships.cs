@@ -235,18 +235,5 @@ namespace BattleshipsClient
         }
 
         public async Task ConnectAsync(IPAddress ip, string name) => await client.ConnectAsync(ip, name);
-
-        /*public void AddShips(List<Ship.Properties> shipPropArray)
-        {
-            myShips = shipPropArray.Select(shipProps => new Ship(shipProps)).ToList();
-
-            if (!MainWindow.DEBUG)
-            {
-                client.EnterMatchmaking(shipPropArray);
-            }
-
-            //if (!shipPropArray.Select(shipProps => shipProps.Size).OrderBy(size => size).SequenceEqual(shipSet.OrderBy(size => size)))
-            //    throw new ArgumentException("Incorrect set of ships");
-        }*/
     }
 }

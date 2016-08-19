@@ -13,6 +13,8 @@ namespace BattleshipsClient
 {
     public partial class MainWindow : Form
     {
+        private const string serverHostname = "foxness.ddns.net";
+
         private const int boardWidth = Game.BoardWidth;
         private const int boardHeight = Game.BoardHeight;
         private const int myBoardX = 40;
@@ -107,6 +109,8 @@ namespace BattleshipsClient
             game.OpponentShot += OnOpponentShot;
             game.MyShotReceived += OnMyShotReceived;
         }
+
+        private static IPAddress GetIPFromHostname(string hostname) => Dns.GetHostAddresses(hostname)[0];
 
         private void SwitchToPlayingStage()
         {
@@ -664,7 +668,7 @@ namespace BattleshipsClient
             if (!game.ConnectedToServer)
             {
                 statusLabel.Text = "Connecting to the server...";
-                await game.ConnectAsync(IPAddress.Loopback, "foxneZz");
+                await game.ConnectAsync(GetIPFromHostname(serverHostname), Environment.MachineName);
             }
             
             game.EnterMatchmaking(currentShips.Select(tuple => tuple.Item1).ToList());
