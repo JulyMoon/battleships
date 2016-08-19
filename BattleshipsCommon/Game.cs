@@ -8,7 +8,7 @@ namespace BattleshipsCommon
     public static class Game
     {
         private static readonly Random random = new Random();
-        private static readonly int[] shipSet = {1, 1, 1}; //{ 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
+        private static readonly int[] shipSet = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
 
         private static readonly int[,] neighborsAndItselfPoints = { { -1, -1 }, { 0, -1 }, { 1, -1 }, { -1, 0 }, { 0, 0 }, { 1, 0 }, { -1, 1 }, { 0, 1 }, { 1, 1 } };
 

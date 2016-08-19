@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Windows.Forms;
 using BattleshipsCommon;
 
@@ -35,10 +37,6 @@ namespace BattleshipsClient
         private const float emptyCellRatio = 1f / 6;
 
         private static readonly int[,] adjacentNeighbors = { { 0, -1 }, { 1, 0 }, { -1, 0 }, { 0, 1 } };
-
-        private const string myTurnString = "Your turn";
-        private const string opponentsTurnString = "Opponent's turn";
-        private const string placeString = "Place the ships";
         
         private static readonly Pen boardPen = new Pen(Color.FromArgb(180, 180, 255));
         private static readonly Brush boardTextBrush = Brushes.Black;
@@ -59,6 +57,7 @@ namespace BattleshipsClient
         private static readonly Brush verifiedEmptyBrush = new SolidBrush(Color.DarkGray);
         private static readonly Font boardFont = new Font("Consolas", 10);
 
+        private Locale locale;
         private readonly Battleships game = new Battleships();
         private readonly List<Tuple<ShipProperties, bool>> currentShips = new List<Tuple<ShipProperties, bool>>();
         private readonly List<Tuple<ShipProperties, bool>> setShips = new List<Tuple<ShipProperties, bool>>();
@@ -98,6 +97,8 @@ namespace BattleshipsClient
         {
             InitializeComponent();
 
+            ApplyLocal(Locale.GetLocale(CultureInfo.InstalledUICulture));
+
             AdoptShipSet(Game.ShipSet);
 
             placementControls = new Control[] {randomButton, playButton};
@@ -110,6 +111,16 @@ namespace BattleshipsClient
             game.OpponentFound += OnOpponentFound;
             game.OpponentShot += OnOpponentShot;
             game.MyShotReceived += OnMyShotReceived;
+        }
+
+        private void ApplyLocal(Locale l)
+        {
+            locale = l;
+            Text = locale.Title;
+            statusLabel.Text = locale.PlacementStatus;
+            randomButton.Text = locale.RandomButton;
+            playButton.Text = locale.PlayButton;
+            continueButton.Text = locale.ContinueButton;
         }
 
         private static IPAddress GetIPFromHostname(string hostname) => Dns.GetHostAddresses(hostname)[0];
@@ -126,7 +137,7 @@ namespace BattleshipsClient
 
         private void SwitchToPostgameStage()
         {
-            statusLabel.Text = $"You {(game.Won ? "won" : "lost")}";
+            statusLabel.Text = game.Won ? locale.Win : locale.Loss;
             statusLabel.BackColor = game.Won ? winColor : loseColor;
             continueButton.Visible = true;
             stage = Stage.Postgame;
@@ -163,7 +174,7 @@ namespace BattleshipsClient
         private void OnMyShotReceived() => RunOnUIThread(HandleShot);
 
         private void UpdateStatus()
-            => statusLabel.Text = game.MyTurn ? myTurnString : opponentsTurnString;
+            => statusLabel.Text = game.MyTurn ? locale.YourTurn : locale.OpponentsTurn;
 
         private void TogglePlacementControlVisibility(bool visible)
         {
@@ -179,7 +190,7 @@ namespace BattleshipsClient
 
         private void ResetStatus()
         {
-            statusLabel.Text = placeString;
+            statusLabel.Text = locale.PlacementStatus;
             statusLabel.BackColor = neutralStatusColor;
         }
 
@@ -307,7 +318,7 @@ namespace BattleshipsClient
             }
 
             for (int i = 0; i < boardWidth; i++)
-                g.DrawString(((char)('A' + i)).ToString(), boardFont, boardTextBrush, boardx + i * cellSize + 7, boardy - cellSize + 3);
+                g.DrawString(locale.Alphabet[i].ToString(), boardFont, boardTextBrush, boardx + i * cellSize + 7, boardy - cellSize + 3);
 
             for (int i = 0; i < boardHeight; i++)
             {
@@ -677,12 +688,12 @@ namespace BattleshipsClient
 
             if (!game.ConnectedToServer)
             {
-                statusLabel.Text = "Connecting to the server...";
+                statusLabel.Text = locale.ConnectingStatus;
                 await game.ConnectAsync(GetIPFromHostname(serverHostname), Environment.MachineName);
             }
             
             game.EnterMatchmaking(currentShips.Select(tuple => tuple.Item1).ToList());
-            statusLabel.Text = "Waiting for opponent...";
+            statusLabel.Text = locale.Waiting;
 
             stage = Stage.Matchmaking;
             Invalidate();
