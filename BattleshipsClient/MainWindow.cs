@@ -83,8 +83,10 @@ namespace BattleshipsClient
         private bool hovering; // over the enemy board;
         private int hoverX;
         private int hoverY;
+
+        private bool responseReceived = true;
         private bool canShoot => game.MyTurn && game.GetEnemyCell(hoverX, hoverY) == Battleships.Cell.Unknown
-            && !game.GetEnemyVerifiedEmptyCell(hoverX, hoverY);
+            && !game.GetEnemyVerifiedEmptyCell(hoverX, hoverY) && responseReceived;
 
         private readonly Control[] placementControls;
 
@@ -144,6 +146,8 @@ namespace BattleshipsClient
 
         private void HandleShot()
         {
+            responseReceived = true;
+
             if (game.GameOver)
                 SwitchToPostgameStage();
             else
@@ -579,7 +583,13 @@ namespace BattleshipsClient
                     Snap(e);
                     break;
 
-                case Stage.Playing: if (hovering && canShoot) game.Shoot(hoverX, hoverY); break;
+                case Stage.Playing:
+                    if (hovering && canShoot)
+                    {
+                        responseReceived = false;
+                        game.Shoot(hoverX, hoverY);
+                    }
+                    break;
             }
         }
 
