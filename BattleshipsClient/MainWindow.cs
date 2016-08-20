@@ -4,8 +4,6 @@ using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
-using System.Net;
-using System.Reflection;
 using System.Windows.Forms;
 using BattleshipsCommon;
 
@@ -15,8 +13,6 @@ namespace BattleshipsClient
 {
     public partial class MainWindow : Form
     {
-        private const string serverHostname = "foxness.ddns.net";
-
         private const int boardWidth = Game.BoardWidth;
         private const int boardHeight = Game.BoardHeight;
         private const int myBoardX = 40;
@@ -97,7 +93,7 @@ namespace BattleshipsClient
         {
             InitializeComponent();
 
-            ApplyLocal(Locale.GetLocale(CultureInfo.InstalledUICulture));
+            ApplyLocale(Locale.GetLocale(CultureInfo.InstalledUICulture));
 
             AdoptShipSet(Game.ShipSet);
 
@@ -113,7 +109,7 @@ namespace BattleshipsClient
             game.MyShotReceived += OnMyShotReceived;
         }
 
-        private void ApplyLocal(Locale l)
+        private void ApplyLocale(Locale l)
         {
             locale = l;
             Text = locale.Title;
@@ -122,8 +118,6 @@ namespace BattleshipsClient
             playButton.Text = locale.PlayButton;
             continueButton.Text = locale.ContinueButton;
         }
-
-        private static IPAddress GetIPFromHostname(string hostname) => Dns.GetHostAddresses(hostname)[0];
 
         private void SwitchToPlayingStage()
         {
@@ -689,7 +683,7 @@ namespace BattleshipsClient
             if (!game.ConnectedToServer)
             {
                 statusLabel.Text = locale.ConnectingStatus;
-                await game.ConnectAsync(GetIPFromHostname(serverHostname), Environment.MachineName);
+                await game.ConnectAsync(Game.ServerIP, Environment.UserName);
             }
             
             game.EnterMatchmaking(currentShips.Select(tuple => tuple.Item1).ToList());

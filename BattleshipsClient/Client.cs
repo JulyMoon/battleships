@@ -14,7 +14,6 @@ namespace BattleshipsClient
         private readonly TcpClient client = new TcpClient(AddressFamily.InterNetwork);
         private BinaryWriter writer;
         private BinaryReader reader;
-        private const int port = 7070;
 
         public enum ShotResult { Miss, Hit, Sink }
 
@@ -34,7 +33,7 @@ namespace BattleshipsClient
 
         public async Task ConnectAsync(IPAddress IP, string name)
         {
-            await client.ConnectAsync(IP, port);
+            await client.ConnectAsync(IP, Game.Port);
             writer = new BinaryWriter(client.GetStream());
             reader = new BinaryReader(client.GetStream());
 

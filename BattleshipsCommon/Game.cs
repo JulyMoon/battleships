@@ -2,11 +2,17 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
 
 namespace BattleshipsCommon
 {
     public static class Game
     {
+        public const string ServerHostname = "foxness.ddns.net";
+        public const int Port = 7070;
+
+        public static IPAddress ServerIP => GetIPFromHostname(ServerHostname);
+
         private static readonly Random random = new Random();
         private static readonly int[] shipSet = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
 
@@ -27,6 +33,8 @@ namespace BattleshipsCommon
         public const string EnterString = "enter";
         public const string LeaveString = "leave";
         public const string ShootString = "shoot";
+
+        public static IPAddress GetIPFromHostname(string hostname) => Dns.GetHostAddresses(hostname)[0];
 
         public static void GetShipDimensions(bool vertical, int size, out int shipW, out int shipH)
         {
