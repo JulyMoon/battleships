@@ -44,9 +44,10 @@ namespace BattleshipsClient
         private static readonly Pen shipWindowPen = boardPen;
         private static readonly Pen myTurnPen = new Pen(Color.FromArgb(turnIndicatorAlpha, Color.LimeGreen), turnIndicatorWidth);
         private static readonly Pen enemyTurnPen = new Pen(Color.FromArgb(turnIndicatorAlpha, Color.Red), turnIndicatorWidth);
-        private static readonly Color winColor = Color.FromArgb(120, Color.LimeGreen);
-        private static readonly Color loseColor = Color.FromArgb(120, Color.Red);
+        private static readonly Color winStatusColor = Color.FromArgb(120, Color.LimeGreen);
+        private static readonly Color loseStatusColor = Color.FromArgb(120, Color.Red);
         private static readonly Color neutralStatusColor = Color.Transparent;
+        private static readonly Color errorStatusColor = Color.Coral;
         private static readonly Pen hoverPen = new Pen(Color.MediumSeaGreen, hoverPenWidth);
         private static readonly Pen hoverDisabledPen = new Pen(Color.DarkGray, hoverPenWidth);
         private static readonly Brush emptyBrush = new SolidBrush(Color.DimGray);
@@ -119,6 +120,14 @@ namespace BattleshipsClient
             continueButton.Text = locale.ContinueButton;
         }
 
+        private void SwitchToMatchmakingStage()
+        {
+            TogglePlacementControlAvailability(false);
+
+            stage = Stage.Matchmaking;
+            Invalidate();
+        }
+
         private void SwitchToPlayingStage()
         {
             UpdateStatus();
@@ -132,7 +141,7 @@ namespace BattleshipsClient
         private void SwitchToPostgameStage()
         {
             statusLabel.Text = game.Won ? locale.Win : locale.Loss;
-            statusLabel.BackColor = game.Won ? winColor : loseColor;
+            statusLabel.BackColor = game.Won ? winStatusColor : loseStatusColor;
             continueButton.Visible = true;
             stage = Stage.Postgame;
         }
@@ -368,6 +377,14 @@ namespace BattleshipsClient
             DrawAbsoluteShip(snapping ? shipSnapPen : shipEditablePen, new ShipProperties(drag.Size, drag.IsVertical, dragx, dragy));
         }
 
+        private void DrawMatchmakingStage()
+        {
+            DrawBoard(myBoardX, myBoardY);
+            DrawShipWindow(shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
+
+            DrawBoardShips(shipPen, GetNotUsedShips(currentShips), myBoardX, myBoardY); //DrawBoardShips(shipPen, game.MyShipProps, myBoardX, myBoardY);
+        }
+
         private void DrawPlayingStage()
         {
             int boardx, boardy;
@@ -494,14 +511,6 @@ namespace BattleshipsClient
 
         private void DrawTurnIndicator(Pen pen, int boardx, int boardy)
             => g.DrawRectangle(pen, boardx - turnIndicatorPadding, boardy - turnIndicatorPadding, boardWidth * cellSize + turnIndicatorPadding * 2, boardHeight * cellSize + turnIndicatorPadding * 2);
-
-        private void DrawMatchmakingStage()
-        {
-            DrawBoard(myBoardX, myBoardY);
-            DrawShipWindow(shipWindowPen, shipWindowX, shipWindowY, shipWindowWidth, shipWindowHeight);
-
-            DrawBoardShips(shipPen, game.MyShipProps, myBoardX, myBoardY);
-        }
 
         private void MainWindow_Paint(object sender, PaintEventArgs e)
         {
@@ -678,19 +687,31 @@ namespace BattleshipsClient
 
         private async void playButton_Click(object sender, EventArgs e)
         {
-            TogglePlacementControlAvailability(false);
+            SwitchToMatchmakingStage();
 
             if (!game.ConnectedToServer)
             {
                 statusLabel.Text = locale.ConnectingStatus;
-                await game.ConnectAsync(Game.ServerIP, Environment.UserName);
+                statusLabel.BackColor = neutralStatusColor;
+
+                try
+                {
+                    await game.ConnectAsync(Game.ServerIP, Environment.UserName);
+                }
+                catch
+                {
+                    TogglePlacementControlAvailability(true);
+                    statusLabel.Text = locale.UnavailableServerStatus;
+                    statusLabel.BackColor = errorStatusColor;
+
+                    stage = Stage.Placement;
+                    Invalidate();
+                    return;
+                }
             }
             
             game.EnterMatchmaking(currentShips.Select(tuple => tuple.Item1).ToList());
             statusLabel.Text = locale.Waiting;
-
-            stage = Stage.Matchmaking;
-            Invalidate();
         }
 
         private void randomButton_Click(object sender, EventArgs e)

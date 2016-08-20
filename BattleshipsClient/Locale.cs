@@ -16,6 +16,7 @@ namespace BattleshipsClient
         public string OpponentsTurn { get; private set; }
         public string Waiting { get; private set; }
         public string Alphabet { get; private set; }
+        public string UnavailableServerStatus { get; private set; }
 
         public static readonly Locale English = new Locale
         {
@@ -30,7 +31,8 @@ namespace BattleshipsClient
             YourTurn = "Your turn",
             OpponentsTurn = "Opponent's turn",
             Waiting = "Waiting for opponent...",
-            Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            UnavailableServerStatus = "Error: the server is unavailable"
         };
 
         public static readonly Locale Russian = new Locale
@@ -46,7 +48,8 @@ namespace BattleshipsClient
             YourTurn = "Твой ход",
             OpponentsTurn = "Ход противника",
             Waiting = "Поиск противника...",
-            Alphabet = "АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯЁЙ"
+            Alphabet = "АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯЁЙ",
+            UnavailableServerStatus = "Ошибка: сервер недоступен"
         };
 
         public static Locale GetLocale(CultureInfo cultireInfo)

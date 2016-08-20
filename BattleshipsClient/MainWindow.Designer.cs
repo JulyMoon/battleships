@@ -63,7 +63,7 @@
             this.statusLabel.Font = new System.Drawing.Font("Verdana", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.statusLabel.Location = new System.Drawing.Point(9, 79);
             this.statusLabel.Name = "statusLabel";
-            this.statusLabel.Size = new System.Drawing.Size(232, 29);
+            this.statusLabel.Size = new System.Drawing.Size(298, 29);
             this.statusLabel.TabIndex = 4;
             this.statusLabel.Text = "Place the ships";
             this.statusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
