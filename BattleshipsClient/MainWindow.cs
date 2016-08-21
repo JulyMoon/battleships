@@ -86,7 +86,7 @@ namespace BattleshipsClient
 
         private readonly Control[] placementControls;
 
-        private enum Stage { Placement, Matchmaking, Playing, Postgame }
+        private enum Stage { Placement, Matchmaking, Playing, ServerUnavailable, Postgame }
 
         private Stage stage = Stage.Placement;
 
@@ -138,6 +138,16 @@ namespace BattleshipsClient
             Invalidate();
         }
 
+        private void SwitchToServerUnavailableStage()
+        {
+            statusLabel.Text = locale.UnavailableServerStatus;
+            statusLabel.BackColor = errorStatusColor;
+            continueButton.Visible = true;
+
+            stage = Stage.ServerUnavailable;
+            Invalidate();
+        }
+
         private void SwitchToPostgameStage()
         {
             statusLabel.Text = game.Won ? locale.Win : locale.Loss;
@@ -152,7 +162,7 @@ namespace BattleshipsClient
             TogglePlacementControlAvailability(true);
             TogglePlacementControlVisibility(true);
             continueButton.Visible = false;
-            game.NewGame();
+            game.NewGame(stage == Stage.ServerUnavailable);
 
             stage = Stage.Placement;
             Invalidate();
@@ -411,6 +421,29 @@ namespace BattleshipsClient
                 DrawHoverIndicator();
         }
 
+        private void DrawServerUnavailableStage()
+        {
+            int boardx, boardy;
+            if (game.MyTurn)
+            {
+                boardx = enemyBoardX;
+                boardy = enemyBoardY;
+            }
+            else
+            {
+                boardx = myBoardX;
+                boardy = myBoardY;
+            }
+            DrawTurnIndicator(game.MyTurn ? myTurnPen : enemyTurnPen, boardx, boardy);
+
+            DrawBoard(myBoardX, myBoardY);
+            DrawBoardShips(shipPen, game.MyShips, myBoardX, myBoardY);
+            DrawMyMissCells();
+
+            DrawBoard(enemyBoardX, enemyBoardY);
+            DrawEnemyBoardCells();
+        }
+
         private void DrawPostgameStage()
         {
             DrawBoard(myBoardX, myBoardY);
@@ -521,6 +554,7 @@ namespace BattleshipsClient
                 case Stage.Placement: DrawPlacementStage(); break;
                 case Stage.Matchmaking: DrawMatchmakingStage(); break;
                 case Stage.Playing: DrawPlayingStage(); break;
+                case Stage.ServerUnavailable: DrawServerUnavailableStage(); break;
                 case Stage.Postgame: DrawPostgameStage(); break;
             }
         }
@@ -601,7 +635,15 @@ namespace BattleshipsClient
                     if (hovering && canShoot)
                     {
                         responseReceived = false;
-                        game.Shoot(hoverX, hoverY);
+
+                        try
+                        {
+                            game.Shoot(hoverX, hoverY);
+                        }
+                        catch
+                        {
+                            SwitchToServerUnavailableStage();
+                        }
                     }
                     break;
             }

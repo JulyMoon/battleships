@@ -9,7 +9,7 @@ namespace BattleshipsClient
 {
     public class Battleships
     {
-        private readonly Client client = new Client();
+        private Client client;
 
         private static readonly int[,] diagonalNeighbors = { { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } };
         private static readonly int[,] adjacentNeighbors = { { 0, -1 }, { 1, 0 }, { -1, 0 }, { 0, 1 } };
@@ -50,14 +50,18 @@ namespace BattleshipsClient
 
         public Battleships()
         {
+            NewGame(true);
+        }
+
+        private void NewClient()
+        {
+            client = new Client();
             client.OpponentFound += OnOpponentFound;
             client.OpponentShot += OnOpponentShot;
             client.MyShotReceived += OnMyShotReceived;
-
-            NewGame();
         }
 
-        public void NewGame()
+        public void NewGame(bool newClientNeeded)
         {
             GameOver = false;
             myShipProps = null;
@@ -71,6 +75,9 @@ namespace BattleshipsClient
                     myVerifiedEmptyCells[x, y] = false;
                     myMissCells[x, y] = false;
                 }
+
+            if (newClientNeeded)
+                NewClient();
         }
 
         private void OnOpponentFound(bool myTurn)
